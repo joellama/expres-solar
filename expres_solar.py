@@ -171,9 +171,9 @@ class expres_solar():
           if (tnow > sun_up['MJD']) and (tnow <= meridian_flip['MJD']):
             # it's the morning 
             self.morning()
-          else if (tnow < sun_down['MJD']) and (tnow > meridian_flip['MJD']):
+          elif (tnow < sun_down['MJD']) and (tnow > meridian_flip['MJD']):
             self.afternoon()
-          else if (tnow < sun_up['MJD']) or (tnow > sun_down['MJD']):
+          elif (tnow < sun_up['MJD']) or (tnow > sun_down['MJD']):
             #its night time 
             self.end_day()
           else:
