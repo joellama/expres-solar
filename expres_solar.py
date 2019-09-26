@@ -117,7 +117,7 @@ class expres_solar():
         self.tz = pytz.timezone('US/Arizona')
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
-        self.scheduler.add_job(self.plan_the_day(), 'cron', hour=1, minute=0, replace_existing=True)
+        self.scheduler.add_job(self.plan_the_day, 'cron', hour=1, minute=0, replace_existing=True)
         self.just_initizalized = True
         self.plan_the_day()
 
@@ -132,8 +132,8 @@ class expres_solar():
  
     def get_sun_for_whole_day(self):
         tnow = datetime.now().date()
-        today = datetime(tnow.year, tnow.month, tnow.day, 0, 0, 0)
-        tomorrow = datetime(today.year, today.month, today.day, 23, 59, 59)
+        today = datetime(tnow.year, tnow.month, tnow.day, 0, 0, 0, tzinfo=self.tz)
+        tomorrow = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=self.tz)
         time_arr = pd.date_range(start=today, end=tomorrow, freq='1min')
         frame = AltAz(obstime=time_arr, location=self.site)
         sun = get_sun(Time(time_arr))
@@ -153,36 +153,44 @@ class expres_solar():
         self.get_time()
         self.get_weather()      
         self.get_sun_for_whole_day()
-        self.sun_up = self.sunpos.query('Alt > 20').iloc[0]
-        self.sun_down = self.sunpos.query('Alt > 20').iloc[-1]
+        self.sun_up = self.sunpos.query('Alt > 13').iloc[0]
+        self.sun_down = self.sunpos.query('Alt > 13').iloc[-1]
         self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5] # Go 5 minutes past just to ensure meridian flip
-        self.sio.emit('update', {'sun_up': '{0:s}'.format(self.sun_up['ISO_AZ'][11:-3]),
-                                 'sun_down': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
-                                 'meridian_flip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])})
-        self.scheduler.add_job(self.morning(), 'date', run_date=Time(self.sun_up['ISO_AZ']).datetime, 
-                                replace_existing=True)
-        self.scheduler.add_job(self.afternon(), 'date', run_date=Time(self.meridian_flip['ISO_AZ']).datetime, 
-                                replace_existing=True)
-        self.scheduler.add_job(self.end_day(), 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
-                                replace_existing=True)   
-        if self.just_initizalized == True:
-          self.jun_initialized = False
-          tnow = Time.now().mjd
-          if (tnow > sun_up['MJD']) and (tnow <= meridian_flip['MJD']):
-            # it's the morning 
-            self.morning()
-          elif (tnow < sun_down['MJD']) and (tnow > meridian_flip['MJD']):
-            self.afternoon()
-          elif (tnow < sun_up['MJD']) or (tnow > sun_down['MJD']):
-            #its night time 
-            self.end_day()
-          else:
-            print("Check your times, this shouldn't be an option")             
-
-
+        # self.sio.emit('update', {'sun_up': '{0:s}'.format(self.sun_up['ISO_AZ'][11:-3]),
+        #                          'sun_down': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
+        #                          'meridian_flip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])})
+        print('Sun up time: {0:s}'.format(self.sun_up['ISO_AZ']))
+        print('Meridian flip time: {0:s}'.format(self.meridian_flip['ISO_AZ']))
+        print('Sun down time: {0:s}'.format(self.sun_down['ISO_AZ']))
+        if not self.just_initizalized:
+            self.scheduler.add_job(self.morning, 'date', run_date=Time(self.sun_up['ISO_AZ']).datetime, 
+                                    replace_existing=True)
+            self.scheduler.add_job(self.afternoon, 'date', run_date=Time(self.meridian_flip['ISO_AZ']).datetime, 
+                                    replace_existing=True)
+            self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
+                                    replace_existing=True)
+        else:
+            self.jun_initialized = False
+            tnow = Time.now().mjd
+            print(self.sun_down['MJD'])
+            if (tnow > self.sun_up['MJD']) and (tnow <= self.meridian_flip['MJD']):
+                self.scheduler.add_job(self.afternoon, 'date', run_date=Time(self.meridian_flip['ISO_AZ']).datetime, 
+                                        replace_existing=True)
+                self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
+                                        replace_existing=True)
+                self.morning()
+            elif (tnow < self.sun_down['MJD']) and (tnow > self.meridian_flip['MJD']):
+                self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
+                                    replace_existing=True)              
+                self.afternoon()
+            elif (tnow < self.sun_up['MJD']) or (tnow > self.sun_down['MJD']):
+              #its night time 
+              self.end_day()
+            else:
+              print("Check your times, this shouldn't be an option")             
  
     def morning(self):
-        print('Running Morning script')
+        print('Running Morning script at UTC {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         time.sleep(1)
@@ -192,7 +200,7 @@ class expres_solar():
         # do all the guider activation here - recalling the AM settings 
 
     def afternoon(self):
-        print('Running afternoon script')
+        print('Running Midday script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
         self.telescope.send_query('hN')
         time.sleep(1)
@@ -202,7 +210,7 @@ class expres_solar():
         # Reactivate the guider here - remembering to recall PM 
 
     def end_day(self):
-        print('Running evening script')      
+        print('Running Evening script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         self.telescope.send_query('hP')
         time.sleep(30)
         self.telescope.send_query('hN') # sleep the telescope
