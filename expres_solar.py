@@ -145,8 +145,8 @@ class expres_solar():
         self.sunpos['RA_STR'] = sun.ra.to_string(u.hour, sep=':', precision=0, pad=True)
         self.sunpos['DEC_STR'] = sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)
         self.sunpos['Az'] = sun.transform_to(frame).az.value
-        self.sunpos['Alt'] = sunAlt
-        self.sio.emit('sunPlot', sunpos[['ISO_AZ','Alt']].to_json(orient='records'))
+        self.sunpos['Alt'] = sun.transform_to(frame).alt.value
+        self.sio.emit('sunPlot', self.sunpos[['ISO_AZ','Alt']].to_json(orient='records'))
 
 
     def plan_the_day(self): # This gets run at startup and also every day at 1am. 
@@ -155,7 +155,7 @@ class expres_solar():
         self.get_sun_for_whole_day()
         self.sun_up = self.sunpos.query('Alt > 20').iloc[0]
         self.sun_down = self.sunpos.query('Alt > 20').iloc[-1]
-        self.meridian_flip = self.sunpos.iloc[sunpos['Alt'].idxmax() + 5] # Go 5 minutes past just to ensure meridian flip
+        self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5] # Go 5 minutes past just to ensure meridian flip
         self.sio.emit('update', {'sun_up': '{0:s}'.format(self.sun_up['ISO_AZ'][11:-3]),
                                  'sun_down': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
                                  'meridian_flip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])})
