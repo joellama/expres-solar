@@ -185,9 +185,9 @@ class expres_solar():
       tnow = Time.now().mjd
       if (tnow <= sun_up['MJD']) or (tnow >= sun_down['MJD']):
       
-      else if (tnow > sun_up['MJD']) and (tnow <= meridian_flip['MJD']):
+      elif (tnow > sun_up['MJD']) and (tnow <= meridian_flip['MJD']):
         # it's the morning 
-      else if (tnow < sun_down['MJD']) and (tnow > meridian_flip['MJD']):
+      elif (tnow < sun_down['MJD']) and (tnow > meridian_flip['MJD']):
         # It's the afternoon 
       else:
         print("Check your times, this shouldn't be an option")
