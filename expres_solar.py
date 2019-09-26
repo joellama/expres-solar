@@ -134,7 +134,7 @@ class expres_solar():
         tnow = datetime.now().date()
         today = datetime(tnow.year, tnow.month, tnow.day, 0, 0, 0)
         tomorrow = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=self.tz)
-        time_arr = pd.date_range(start=tstart, end=tomorrow, freq='1min')
+        time_arr = pd.date_range(start=today, end=tomorrow, freq='1min')
         frame = AltAz(obstime=time_arr, location=self.site)
         sun = get_sun(Time(time_arr))
         self.sunpos = pd.DataFrame()
