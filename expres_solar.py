@@ -132,7 +132,7 @@ class expres_solar():
  
     def get_sun_for_whole_day(self):
         tnow = datetime.now().date()
-        today = datetime(today.year, today.month, today.day, 0, 0, 0)
+        today = datetime(tnow.year, tnow.month, tnow.day, 0, 0, 0)
         tomorrow = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=self.tz)
         time_arr = pd.date_range(start=tstart, end=tomorrow, freq='1min')
         frame = AltAz(obstime=time_arr, location=self.site)
