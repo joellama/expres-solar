@@ -130,6 +130,7 @@ class expres_solar():
                                  'mjd':'{0:.5f}'.format(self.mjd),
                                  'utdate': self.utdate
                                  })
+     
      def get_sun_coords(self):
         frame = AltAz(obstime=Time.now(), location=self.site)
         sun = get_sun(Time.now())
@@ -220,10 +221,6 @@ class expres_solar():
         time.sleep(30)
         self.telescope.send_query('hN') # sleep the telescope
         # Stop guiding 
-
-      
-
-
 
     def get_temperature(self):
         fh = os.path.join('D:', 'temp_humidity.csv')
