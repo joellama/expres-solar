@@ -131,7 +131,7 @@ class expres_solar():
                                  })
         return
      
-     def get_sun_coords(self):
+    def get_sun_coords(self):
         frame = AltAz(obstime=Time.now(), location=self.site)
         sun = get_sun(Time.now())
         return sun, frame
@@ -165,9 +165,13 @@ class expres_solar():
         # self.sio.emit('update', {'sun_up': '{0:s}'.format(self.sun_up['ISO_AZ'][11:-3]),
         #                          'sun_down': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
         #                          'meridian_flip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])})
-        print('Sun up time: {0:s}'.format(self.sun_up['ISO_AZ']))
-        print('Meridian flip time: {0:s}'.format(self.meridian_flip['ISO_AZ']))
-        print('Sun down time: {0:s}'.format(self.sun_down['ISO_AZ']))
+        print('Sun up time: {0:s} ({1:.6f})'.format(self.sun_up['ISO_AZ'],self.sun_up['MJD'])
+        print('Meridian flip time: {0:s} ({1:.6f})'.format(self.meridian_flip['ISO_AZ'],self.meridian_flip['MJD'])
+        print('Sun down time: {0:s} ({1:.6f})'.format(self.sun_down['ISO_AZ'],self.sun_down['MJD'])
+        self.sio.emit('update', {'sunup': '{0:s} '.format(self.sun_up['ISO_AZ']),
+                                 'sundown': '{0:s}'.format(self.sun_down['ISO_AZ']),
+                                 'merflip': '{0:s}'.format(self.meridian_flip['ISO_AZ'])
+                                 })
         if not self.just_initizalized:
             self.scheduler.add_job(self.morning, 'date', run_date=Time(self.sun_up['ISO_AZ']).datetime, 
                                     replace_existing=True)
