@@ -28,7 +28,7 @@ from astropy.time import Time
 class guider():
     def __init__(self): 
         sp = serial.Serial()
-        sp.port = '/dev/cu.usbserial-A105ADUQ'
+        sp.port = '/dev/cu.usbserial-A105ADUQ' 
         sp.baudrate = 38400
         sp.parity = serial.PARITY_NONE
         sp.bytesize = serial.EIGHTBITS
