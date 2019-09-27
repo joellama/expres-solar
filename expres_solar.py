@@ -134,7 +134,7 @@ class expres_solar():
         frame = AltAz(obstime=Time.now(), location=self.site)
         sun = get_sun(Time.now())
         return sun, frame
-        
+
     def get_sun_for_whole_day(self):
         tnow = datetime.now().date()
         today = datetime(tnow.year, tnow.month, tnow.day, 0, 0, 0, tzinfo=self.tz)
@@ -158,8 +158,8 @@ class expres_solar():
         self.get_time()
         self.get_weather()      
         self.get_sun_for_whole_day()
-        self.sun_up = self.sunpos.query('Alt > 13').iloc[0]
-        self.sun_down = self.sunpos.query('Alt > 13').iloc[-1]
+        self.sun_up = self.sunpos.query('Alt > 43.2').iloc[0]
+        self.sun_down = self.sunpos.query('Alt > 43.2').iloc[-1]
         self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5] # Go 5 minutes past just to ensure meridian flip
         # self.sio.emit('update', {'sun_up': '{0:s}'.format(self.sun_up['ISO_AZ'][11:-3]),
         #                          'sun_down': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
@@ -175,7 +175,7 @@ class expres_solar():
             self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
                                     replace_existing=True)
         else:
-            self.jun_initialized = False
+            self.just_initialized = False
             tnow = Time.now().mjd
             print(self.sun_down['MJD'])
             if (tnow > self.sun_up['MJD']) and (tnow <= self.meridian_flip['MJD']):
