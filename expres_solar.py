@@ -180,7 +180,7 @@ class expres_solar():
             self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
                                     replace_existing=True)
         else:
-            self.just_initialized = False
+            self.just_initialized = False 
             tnow = Time.now().mjd
             print(self.sun_down['MJD'])
             if (tnow > self.sun_up['MJD']) and (tnow <= self.meridian_flip['MJD']):
