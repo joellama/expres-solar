@@ -108,7 +108,6 @@ class telescope():
  
 
 class expres_solar():
-
     def __init__(self):
         self.sio = socketio.Client()
         self.sio.connect('http://localhost:8080')
@@ -130,6 +129,7 @@ class expres_solar():
                                  'mjd':'{0:.5f}'.format(self.mjd),
                                  'utdate': self.utdate
                                  })
+        return
      
      def get_sun_coords(self):
         frame = AltAz(obstime=Time.now(), location=self.site)
