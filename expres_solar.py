@@ -101,6 +101,7 @@ class telescope():
     def goto(self, sunpos):
         ra_str = sunpos.ra.to_string(u.hour, sep=':', precision=0, pad=True)
         dec_str = sunpos.dec.to_string(u.deg, sep=':', precision=2, pad=True)
+        print("slewing telescope to RA: {0:s} DEC: {1:s}".format(ra_str, dec_str))
         send_ra = self.send_query('Sr{0:s}'.format(ra_str))
         send_dec = self.send_query('Sd{0:s}'.format(dec_str))
         self.send_query('MM')
