@@ -48,6 +48,16 @@ async def update_sun_intensity(sid, data):
 	print('updating guider table')
 	await sio.emit('guiderUpdate', data)
 
+@sio.on('telescopeStatus')
+async def telescopeStatus(sid, data):
+	print('updating Telescope Status')
+	await sio.emit('telescopeStatus', data)
+
+@sio.on('clearTables')
+async def clearTables(sid, data):
+	print("Clearing data tables in GUI")
+	await sio.emit('clearTables', 'hello')
+
 @sio.on("disconnect")
 def on_disconnect(sid):
     print("Client disconnected")

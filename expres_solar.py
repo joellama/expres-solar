@@ -38,7 +38,7 @@ import sqlite3
 
 class expres_solar():
     def __init__(self, sim_guider=False, sim_telescope=False, 
-                       data_root='./data', sun_min_alt=10,
+                       data_root='./data', sun_min_alt=5,
                        use_scheduler=True):
         self.sio = socketio.Client()
         self.use_scheduler = use_scheduler
@@ -63,7 +63,7 @@ class expres_solar():
           self.scheduler = BackgroundScheduler()
           self.scheduler.start()
           self.scheduler.add_job(self.plan_the_day, 'cron', hour=1, minute=0, replace_existing=True)
-          self.scheduler.add_job(self.update_web_suncoords, 'interval', minutes=5, replace_existing=True)
+          self.scheduler.add_job(self.update_web_suncoords, 'interval', seconds=30, replace_existing=True)
         self.just_initizalized = True
         self.sun_min_alt = sun_min_alt # Degrees
         self.guider_counter = 0 # Only update the table every 10 iterations - this should be improved
@@ -153,6 +153,14 @@ class expres_solar():
                         "MESSAGE" TEXT,
                         "CHECKSUM" INTEGER
                       )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS "telescope" ( 
+                        "ISOT" TEXT,
+                        "MJD" REAL,
+                        "RA" TEXT, 
+                        "DEC" TEXT,
+                        "MOUNT_SIDE" TEXT,
+                        "MODE" TEXT
+                      )""")                        
         db_conn.commit()
         db_conn.close()        
         if not self.just_initizalized and self.use_scheduler:
@@ -192,9 +200,6 @@ class expres_solar():
             else:
               print("Check your times, this shouldn't be an option")    
  
-
-
-
     def morning(self):
         print('Running Morning script at UTC {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
@@ -206,6 +211,7 @@ class expres_solar():
         # do all the guider activation here - recalling the AM settings 
         if self.use_scheduler:
           self.scheduler.add_job(self.update_guider_status, 'interval', seconds=2, replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')
     
     def afternoon(self):
         print('Running Midday script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
@@ -218,16 +224,19 @@ class expres_solar():
         # Reactivate the guider here - remembering to recall PM 
         if self.use_scheduler:
           self.scheduler.add_job(self.update_guider_status, 'interval', seconds=2, replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')          
 
     def end_day(self):
         print('Running Evening script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
-        self.telescope.send_query('hP')
-        # time.sleep(30)
-        self.telescope.send_query('hN') # sleep the telescope
+        self.telescope.send_query('hC')
+        # time.sleep(120)
+        # self.telescope.send_query('hN') # sleep the telescope
         if self.use_scheduler:
-          self.scheduler.remove_job('update_guider')
-        # Stop guiding 
-
+          self.scheduler.add_job('update_guider', 'interval', minutes=1, replace_existing=True,
+            id='update_guider')
+          self.scheduler.add_job('update_telescope', 'interval', minutes=1, replace_existing=True,
+            id='update_guider')
+  
     def get_temperature(self):
         fh = os.path.join('D:', 'temp_humidity.csv')
         if os.path.exists(fh):
@@ -243,7 +252,26 @@ class expres_solar():
     def update_web_suncoords(self):
         sun, frame = self.get_sun_coords()
         self.sio.emit({'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value)})
- 
+        self.sio.emit('update', {'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
+                                  'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
+                                  'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)})
+
+    def update_telescope_status(self):
+        self.telescope.get_status()
+        db_conn = sqlite3.connect(os.path.join(self.data_dir, '{0:s}_log.db'.format(self.utdate)))
+        c = db_conn.cursor()
+        for_db = self.telescope.log.to_pandas().iloc[-1, :]
+        try:
+          c.execute("INSERT INTO telescope VALUES (?, ?, ?, ?, ?, ?)", 
+              list(for_db))
+          db_conn.commit()
+        except:
+          pass
+        db_conn.close()      
+        self.sio.emit('telescopeStatus', {'RA': for_db['RA'], 'DEC': for_db['DEC'], 
+              'MOUNT_SIDE':for_db['MOUNT_SIDE'], 'MODE': for_db['MODE']})
+
+
     def update_guider_status(self):
         # print("Querying guider")
         self.guider.send_query('S')
@@ -331,7 +359,8 @@ def newWebClient(sid):
                                  'sundown': '{0:s}'.format(x.sun_down['ISO_AZ'][11:-3]),
                                  'merflip': '{0:s}'.format(x.meridian_flip['ISO_AZ'][11:-3]),
                                  'today': '{0:s}'.format(x.sun_up['ISO_AZ'][0:10]),
-                                 'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value)
-                                 })
+                                 'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
+                                'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
+                                'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)})
 
 
