@@ -43,6 +43,11 @@ async def update_sun_intensity(sid, data):
 	print('updating sun intensity with value {0:f}'.format(data))
 	await sio.emit('sunIntensity', data)
 
+@sio.on('updateEnv')
+async def updateEnv(sid, data):
+	print('updating environment plot')
+	await sio.emit('updateEnv', data)
+
 @sio.on('guiderUpdate')
 async def update_sun_intensity(sid, data):
 	print('updating guider table')

@@ -14,7 +14,7 @@ import warnings
 from datetime import datetime
 
 from itertools import chain
-
+from time import strptime
 import serial
 
 import astropy.units as u
@@ -64,6 +64,9 @@ class expres_solar():
           self.scheduler.start()
           self.scheduler.add_job(self.plan_the_day, 'cron', hour=1, minute=0, replace_existing=True)
           self.scheduler.add_job(self.update_web_suncoords, 'interval', seconds=30, replace_existing=True)
+          self.scheduler.add_job(self.get_temperature, 'interval', seconds=10, replace_existing=True)
+          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')          
         self.just_initizalized = True
         self.sun_min_alt = sun_min_alt # Degrees
         self.guider_counter = 0 # Only update the table every 10 iterations - this should be improved
@@ -203,32 +206,44 @@ class expres_solar():
     def morning(self):
         print('Running Morning script at UTC {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
+        if self.use_scheduler:
+          self.remove_job('update_guider')
+          self.remove_job('update_telescope')
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
-        time.sleep(1)
+        time.sleep(5)
         self.telescope.goto(sun) # Move the telescope 
         # time.sleep(30)
         # Start tracking 
         # do all the guider activation here - recalling the AM settings 
         if self.use_scheduler:
-          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=2, replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, replace_existing=True, id='update_guider')
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')
     
     def afternoon(self):
         print('Running Midday script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
+        if self.use_scheduler:
+          self.scheduler.remove_job('update_guider')
+          self.scheduler.remove_job('update_telescope')
         self.telescope.send_query('hN')
-        time.sleep(1)
+        time.sleep(5)
         self.telescope.goto(sun)
         # time.sleep(30)
+        time.sleep(30)
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM 
         if self.use_scheduler:
-          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=2, replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, replace_existing=True, id='update_guider')
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')          
 
     def end_day(self):
         print('Running Evening script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        if self.use_scheduler:
+          self.scheduler.remove_job('update_guider')
+          self.scheduler.remove_job('update_telescope')
+        time.sleep(5)
         self.telescope.send_query('hC')
+        time.sleep(5)
         # time.sleep(120)
         # self.telescope.send_query('hN') # sleep the telescope
         if self.use_scheduler:
@@ -238,14 +253,20 @@ class expres_solar():
             id='update_guider')
   
     def get_temperature(self):
-        fh = os.path.join('D:', 'temp_humidity.csv')
+        fh = os.path.join('/', 'Volumes', 'data', 'environment_data', 'thorlabs.csv')
         if os.path.exists(fh):
             df = pd.read_csv(fh, delimiter=';', header=17, engine='python')
+            x = df.iloc[-1, :]
+            t = Time('{0:04d}-{1:02d}-{2:02d}T{3:s}'.format(np.long(x['Date'].split(' ')[2]),
+                                                            strptime(x['Date'].split(' ')[0], '%b').tm_mon,
+                                                            np.long(x['Date'].split(' ')[1]),
+                                                            x['Time']))
             self.lostT = df.iloc[-1, 3]
             self.lostRH = df.iloc[-1, 4]
-            # self.sio.emit('update', {'lostT': '{0:.2f}'.format(self.lostT),
-            #                          'lostRH': '{0:.2f}'.format(self.lostRH)
-            #                          })
+            self.sio.emit('updateEnv', {'Time': t.isot,
+                                     'Temp':float(x.iloc[3]),
+                                     'Humidity': float(x.iloc[4])
+                                     })
         else:
             warnings.warn("File {0:s} not found".format(fh))
     
@@ -254,7 +275,8 @@ class expres_solar():
         self.sio.emit({'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value)})
         self.sio.emit('update', {'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
                                   'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
-                                  'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)})
+                                  'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)
+                                  })
 
     def update_telescope_status(self):
         self.telescope.get_status()
@@ -361,6 +383,7 @@ def newWebClient(sid):
                                  'today': '{0:s}'.format(x.sun_up['ISO_AZ'][0:10]),
                                  'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
                                 'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
-                                'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)})
+                                'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)
+                                })
 
 
