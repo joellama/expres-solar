@@ -38,7 +38,7 @@ import sqlite3
 
 class expres_solar():
     def __init__(self, sim_guider=False, sim_telescope=False, 
-                       data_root='./data', sun_min_alt=5,
+                       data_root='./data', sun_min_alt=3,
                        use_scheduler=True):
         self.sio = socketio.Client()
         self.use_scheduler = use_scheduler
@@ -116,7 +116,7 @@ class expres_solar():
         self.sun_up = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[0]
         self.sun_down = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[-1]
         self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5] # Go 5 minutes past just to ensure meridian flip
- 
+        print_message('Planning the day: {0:s}'.format((Time.now() - 7*u.h).iso[0:19]))
         print('Sun up time: {0:s} ({1:.6f})'.format(self.sun_up['ISO_AZ'],self.sun_up['MJD']))
         print('Meridian flip time: {0:s} ({1:.6f})'.format(self.meridian_flip['ISO_AZ'],self.meridian_flip['MJD']))
         print('Sun down time: {0:s} ({1:.6f})'.format(self.sun_down['ISO_AZ'],self.sun_down['MJD']))
@@ -167,6 +167,7 @@ class expres_solar():
         db_conn.commit()
         db_conn.close()        
         if not self.just_initizalized and self.use_scheduler:
+            print_message('Running the initializer')
             self.scheduler.add_job(self.morning, 'date', run_date=Time(self.sun_up['ISO_AZ']).datetime,  replace_existing=True)
             self.scheduler.add_job(self.afternoon, 'date', run_date=Time(self.meridian_flip['ISO_AZ']).datetime,  replace_existing=True)
             self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime,  replace_existing=True)
@@ -174,20 +175,17 @@ class expres_solar():
             # This is the startup scenario. We don't know what time of day this was run so, cycle through the various scenarios
             self.just_initialized = False 
             tnow = Time.now().mjd
-            print(tnow)
             if (tnow > self.sun_up['MJD']) and (tnow <= self.meridian_flip['MJD']) and self.use_scheduler:
                 # It's the morning and we should be observing. Schedule the afternoon and evening too. 
                 self.scheduler.add_job(self.afternoon, 'date', run_date=Time(self.meridian_flip['ISO_AZ']).datetime, 
                                         replace_existing=True)
                 self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
                                         replace_existing=True)
-                print('Running Morning script')
                 self.morning()
             elif (tnow < self.sun_down['MJD']) and (tnow > self.meridian_flip['MJD']):
                 # It's the afternoon, schedule the end of day.  
                 self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
-                                    replace_existing=True)  
-                print('Running Afternoon script')            
+                                    replace_existing=True)             
                 self.afternoon()
             elif (tnow < self.sun_up['MJD']) or (tnow > self.sun_down['MJD']):
               # It's the evening so we need to make sure we're shut down. 
@@ -198,17 +196,13 @@ class expres_solar():
                                       replace_existing=True)
               self.scheduler.add_job(self.end_day, 'date', run_date=Time(self.sun_down['ISO_AZ']).datetime, 
                                       replace_existing=True)
-              print('Running Evening script')            
               self.end_day()
             else:
               print("Check your times, this shouldn't be an option")    
  
     def morning(self):
-        print('Running Morning script at UTC {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        print_message('Running morning script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
-        if self.use_scheduler:
-          self.remove_job('update_guider')
-          self.remove_job('update_telescope')
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         time.sleep(5)
         self.telescope.goto(sun) # Move the telescope 
@@ -220,7 +214,7 @@ class expres_solar():
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')
     
     def afternoon(self):
-        print('Running Midday script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        print_message('Running Afternoon script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
         if self.use_scheduler:
           self.scheduler.remove_job('update_guider')
@@ -233,11 +227,13 @@ class expres_solar():
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM 
         if self.use_scheduler:
-          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, replace_existing=True, id='update_guider')
-          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')          
+          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, 
+            replace_existing=True, id='update_guider')
+          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, 
+            replace_existing=True, id='update_telescope')          
 
     def end_day(self):
-        print('Running Evening script at {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        print_message('Running evening script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         if self.use_scheduler:
           self.scheduler.remove_job('update_guider')
           self.scheduler.remove_job('update_telescope')
@@ -247,10 +243,10 @@ class expres_solar():
         # time.sleep(120)
         # self.telescope.send_query('hN') # sleep the telescope
         if self.use_scheduler:
-          self.scheduler.add_job('update_guider', 'interval', minutes=1, replace_existing=True,
+          self.scheduler.add_job(self.update_guider_status, 'interval', seconds=600, replace_existing=True,
             id='update_guider')
-          self.scheduler.add_job('update_telescope', 'interval', minutes=1, replace_existing=True,
-            id='update_guider')
+          self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=600, replace_existing=True,
+            id='update_telescope')
   
     def get_temperature(self):
         fh = os.path.join('/', 'Volumes', 'data', 'environment_data', 'thorlabs.csv')
@@ -279,6 +275,7 @@ class expres_solar():
                                   })
 
     def update_telescope_status(self):
+        print_message('Updating telescope status: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]), padding=False)
         self.telescope.get_status()
         db_conn = sqlite3.connect(os.path.join(self.data_dir, '{0:s}_log.db'.format(self.utdate)))
         c = db_conn.cursor()
@@ -295,7 +292,7 @@ class expres_solar():
 
 
     def update_guider_status(self):
-        # print("Querying guider")
+        print_message('Updating guider status: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]), padding=False)
         self.guider.send_query('S')
         for_db = convert_cols_from_bytes(self.guider.log.to_pandas())
         col_list = {'ISOT':"TEXT",
@@ -357,6 +354,12 @@ def signal_handler(signal, frame):
   x.scheduler.stop(wait=False)
   sys.exit(0)
 
+def print_message(msg, padding=True):
+  if padding:
+    print(''.join(np.repeat('-', 11 + len(msg) + 11)))
+  print('{0:s} {1:s} {0:s}'.format(''.join(np.repeat('-', 10)), msg))
+  if padding:
+    print(''.join(np.repeat('-', 11 + len(msg) + 11)))
 
 if __name__ == "__main__":
   

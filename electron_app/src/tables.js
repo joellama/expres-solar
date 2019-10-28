@@ -68,7 +68,6 @@ $(document).ready(function() {
 
   socket.on('telescopeStatus', function(arr) {
     console.log('updating telescopeTable');
-    console.log(arr);
     var azdate = new Date(Date.now() - 25200000.0).toISOString().substr(11, 8);
     if (arr['MOUNT_SIDE'] == "E") {
       var mount_side = "East (PM)";
