@@ -64,7 +64,6 @@ class expres_solar():
           self.scheduler.start()
           self.scheduler.add_job(self.plan_the_day, 'cron', hour=1, minute=0, replace_existing=True)
           self.scheduler.add_job(self.update_web_suncoords, 'interval', seconds=30, replace_existing=True)
-          self.scheduler.add_job(self.get_temperature, 'interval', seconds=10, replace_existing=True)
           self.scheduler.add_job(self.update_guider_status, 'interval', seconds=10, replace_existing=True, id='update_guider')
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=10, replace_existing=True, id='update_telescope')          
         self.just_initizalized = True
@@ -239,32 +238,15 @@ class expres_solar():
           self.scheduler.remove_job('update_telescope')
         time.sleep(5)
         self.telescope.send_query('hC')
-        time.sleep(5)
+        time.sleep(90)
         # time.sleep(120)
-        # self.telescope.send_query('hN') # sleep the telescope
+        self.telescope.send_query('hN') # sleep the telescope
         if self.use_scheduler:
           self.scheduler.add_job(self.update_guider_status, 'interval', seconds=600, replace_existing=True,
             id='update_guider')
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=600, replace_existing=True,
             id='update_telescope')
   
-    def get_temperature(self):
-        fh = os.path.join('/', 'Volumes', 'data', 'environment_data', 'thorlabs.csv')
-        if os.path.exists(fh):
-            df = pd.read_csv(fh, delimiter=';', header=17, engine='python')
-            x = df.iloc[-1, :]
-            t = Time('{0:04d}-{1:02d}-{2:02d}T{3:s}'.format(np.long(x['Date'].split(' ')[2]),
-                                                            strptime(x['Date'].split(' ')[0], '%b').tm_mon,
-                                                            np.long(x['Date'].split(' ')[1]),
-                                                            x['Time']))
-            self.lostT = df.iloc[-1, 3]
-            self.lostRH = df.iloc[-1, 4]
-            self.sio.emit('updateEnv', {'Time': t.isot,
-                                     'Temp':float(x.iloc[3]),
-                                     'Humidity': float(x.iloc[4])
-                                     })
-        else:
-            warnings.warn("File {0:s} not found".format(fh))
     
     def update_web_suncoords(self):
         sun, frame = self.get_sun_coords()
@@ -351,7 +333,7 @@ def signal_handler(signal, frame):
   print('exiting code')
   # Park telescope here
   x.end_day() 
-  x.scheduler.stop(wait=False)
+  # x.scheduler.stop(wait=False)
   sys.exit(0)
 
 def print_message(msg, padding=True):
