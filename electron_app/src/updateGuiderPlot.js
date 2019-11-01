@@ -106,8 +106,6 @@ Highcharts.chart('environmentPlot', {
                         z = data['Humidity'];
                     series_T.addPoint([x, y], true, (++count_T >= maxSamples));
                     series_H.addPoint([x, z], true, (++count_H >= maxSamples));
-                    console.log(count_H);
-                    console.log(count_T);
 
                 });
             }

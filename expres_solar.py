@@ -124,6 +124,7 @@ class expres_solar():
                                  'sundown': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
                                  'merflip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])
                                  })
+        self.sio.emit('clearTables', 'please')
         db_conn = sqlite3.connect(os.path.join(self.data_dir, '{0:s}_log.db'.format(self.utdate)))
         self.sunpos.to_sql(con=db_conn, if_exists='replace', name='sunpos')
         c = db_conn.cursor()
@@ -198,6 +199,11 @@ class expres_solar():
               self.end_day()
             else:
               print("Check your times, this shouldn't be an option")    
+        self.sio.emit('update', {'today': '{0:s}'.format(self.sun_up['ISO_AZ'][0:10]),
+                            'sunup': '{0:s} '.format(self.sun_up['ISO_AZ'][11:-3]),
+                           'sundown': '{0:s}'.format(self.sun_down['ISO_AZ'][11:-3]),
+                           'merflip': '{0:s}'.format(self.meridian_flip['ISO_AZ'][11:-3])
+                           })
  
     def morning(self):
         print_message('Running morning script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
@@ -205,7 +211,14 @@ class expres_solar():
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         time.sleep(5)
         self.telescope.goto(sun) # Move the telescope 
-        # time.sleep(30)
+        time.sleep(30)
+        # self.guider.send_query(']')
+        # time.sleep(2)
+        self.guider.send_query("E")
+        time.sleep(2)
+        self.guider.send_query("A")
+        time.sleep(2)
+        self.guider.send_query("X")        
         # Start tracking 
         # do all the guider activation here - recalling the AM settings 
         if self.use_scheduler:
@@ -223,6 +236,13 @@ class expres_solar():
         self.telescope.goto(sun)
         # time.sleep(30)
         time.sleep(30)
+        self.guider.send_query(']')
+        time.sleep(2)
+        self.guider.send_query('E')
+        time.sleep(2)
+        self.guider.send_query("F")
+        time.sleep(2)
+        self.guider.send_query("X") 
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM 
         if self.use_scheduler:
@@ -237,8 +257,9 @@ class expres_solar():
           self.scheduler.remove_job('update_guider')
           self.scheduler.remove_job('update_telescope')
         time.sleep(5)
+        self.guider.send_query(']')
         self.telescope.send_query('hC')
-        time.sleep(90)
+        time.sleep(30)
         # time.sleep(120)
         self.telescope.send_query('hN') # sleep the telescope
         if self.use_scheduler:
@@ -312,11 +333,11 @@ class expres_solar():
         except:
           pass
         db_conn.close()         
-        self.sio.emit('sunIntensity', int(for_db.loc[0, 'SUN_VIS']))
+        self.sio.emit('sunIntensity', float(for_db.loc[0, 'Y_EXP'] / 327.67))
         self.guider_counter += 1
         if self.guider_counter == 10:
             self.sio.emit('guiderUpdate', {'mode':int(for_db.loc[0, 'MODE']), 
-                                       'sun_vis':int(for_db.loc[0, 'SUN_VIS']), 
+                                       'sun_vis':int(for_db.loc[0, 'Y_EXP'] / 327.67), 
                                        'XCORR':int(for_db.loc[0,'XCORR']), 
                                        'YCORR':int(for_db.loc[0,'YCORR'])})
             self.guider_counter = 0

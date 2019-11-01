@@ -29,7 +29,7 @@ from astropy.time import Time
 class Telescope():
     def __init__(self):
         sp = serial.Serial()
-        sp.port = '/dev/cu.usbserial-14230'
+        sp.port = '/dev/cu.usbserial-14430'
         sp.baudrate = 9600
         sp.parity = serial.PARITY_NONE
         sp.bytesize = serial.EIGHTBITS
