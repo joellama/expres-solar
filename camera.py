@@ -70,6 +70,5 @@ class Camera():
 		hdr['EXPTIME'] = self.camera.get_control_values()['Exposure']
 		hdr['COOLERON'] = self.camera.get_control_values()['CoolerOn']
 		hdr['OFFSET'] = self.camera.get_control_values()['Offset']
-		
 		hdu = fits.PrimaryHDU(img, header=hdr)
 		hdu.writeto(t.strftime('{0:s}.fits'.format(t.strftime('%Y%m%d_%H%M%S'))))
