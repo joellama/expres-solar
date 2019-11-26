@@ -29,7 +29,7 @@ from astropy.time import Time
 class Telescope():
     def __init__(self):
         sp = serial.Serial()
-        sp.port = '/dev/cu.usbserial-14430'
+        sp.port = '/dev/cu.usbserial-14140'
         sp.baudrate = 9600
         sp.parity = serial.PARITY_NONE
         sp.bytesize = serial.EIGHTBITS
@@ -53,6 +53,7 @@ class Telescope():
 
     def send_query(self, qr):
         self.sp.write(str.encode(':'+qr+'#'))
+        # time.sleep(0.5)
         out = self.sp.readline()
         return out
 
@@ -60,9 +61,15 @@ class Telescope():
         ra_str = sunpos.ra.to_string(u.hour, sep=':', precision=0, pad=True)
         dec_str = sunpos.dec.to_string(u.deg, sep=':', precision=2, pad=True)
         print("slewing telescope to RA: {0:s} DEC: {1:s}".format(ra_str, dec_str))
-        send_ra = self.send_query('Sr{0:s}'.format(ra_str))
-        send_dec = self.send_query('Sd{0:s}'.format(dec_str))
+        self.send_query('Sr{0:s}'.format(ra_str))
+        time.sleep(0.5)
+        self.send_query('Sd{0:s}'.format(dec_str))
+        time.sleep(0.5)
         self.send_query('MM')
+        time.sleep(30)
+        ra = self.send_query('GR').decode('utf-8').replace('#','')
+        dec = self.send_query('GD').decode('utf-8').replace('#','')
+        print("Telescope pointing to RA {0:s} DEC: {1:s}".format(ra, dec))
     
     def get_status(self):
         ra = self.send_query('GR').decode('utf-8')[0:-1]
@@ -72,7 +79,7 @@ class Telescope():
         # if mode == 'N':
         #     mode_str = 'Not Tracking'
         # elif mode == 'T':
-        #     mode_str = 'Tracking'
+        #     mode_str = 'Tracking'  15:43:14 DEC: -19:43:33.47
         # elif mode == 'C':
         #     mode_str = 'Centering'
         # elif mode == 'S':

@@ -3,9 +3,10 @@ import socketio
 from aiohttp import web
 
 
-sio = socketio.AsyncServer(async_mode='aiohttp', async_handlers=True)
+sio = socketio.AsyncServer(async_mode='aiohttp', async_handlers=True,
+	cors_allowed_origins='*')
 
-app = web.Application()
+app = web.Application() 
 
 sio.attach(app)
 

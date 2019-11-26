@@ -36,9 +36,13 @@ from telescope import Telescope
 
 import sqlite3
 
+from astropy.utils import iers
+
+iers.IERS_A_URL = 'https://datacenter.iers.org/data/9/finals2000A.all'
+
 class expres_solar():
     def __init__(self, sim_guider=False, sim_telescope=False, 
-                       data_root='./data', sun_min_alt=3,
+                       data_root='./data', sun_min_alt=15,
                        use_scheduler=True):
         self.sio = socketio.Client()
         self.use_scheduler = use_scheduler
@@ -54,6 +58,10 @@ class expres_solar():
         if not sim_telescope:
           print('using real Telescope')
           self.telescope = Telescope()
+          _ = self.telescope.send_query('GC')
+          print('Mount Date: {0:s}'.format(_.decode('utf-8')))
+          _ = self.telescope.send_query('GL')
+          print('Mount Time (UTC): {0:s}'.format(_.decode('utf-8')))
         else:
           print('using simulated telescope')
           self.telescope = FakeTelescope()          
@@ -208,12 +216,11 @@ class expres_solar():
     def morning(self):
         print_message('Running morning script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
-        self.telescope.send_query('hW') # Wake up the telescope and start tracking 
-        time.sleep(5)
+        # self.telescope.send_query('hW') # Wake up the telescope and start tracking         
         self.telescope.goto(sun) # Move the telescope 
-        time.sleep(30)
         # self.guider.send_query(']')
-        # time.sleep(2)
+        self.center_sun()
+        time.sleep(2)
         self.guider.send_query("E")
         time.sleep(2)
         self.guider.send_query("A")
@@ -235,13 +242,11 @@ class expres_solar():
         time.sleep(5)
         self.telescope.goto(sun)
         # time.sleep(30)
-        time.sleep(30)
-        self.guider.send_query(']')
-        time.sleep(2)
+        self.center_sun()
         self.guider.send_query('E')
-        time.sleep(2)
+        time.sleep(0.5)
         self.guider.send_query("F")
-        time.sleep(2)
+        time.sleep(0.5)
         self.guider.send_query("X") 
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM 
@@ -268,14 +273,32 @@ class expres_solar():
           self.scheduler.add_job(self.update_telescope_status, 'interval', seconds=600, replace_existing=True,
             id='update_telescope')
   
-    
+    def center_sun(self, center_px=(68, 60)):
+        plate_scale = 0.05*u.deg # Not exact, but close enough
+        self.guider.send_query('S')
+        xloc = self.guider.log['X_RA_POS'][-1]
+        yloc = self.guider.log['Y_RA_POS'][-1]
+        xcorr = (xloc - center_px[0])
+        ycorr = (yloc - center_px[1])
+        ra = self.telescope.send_query('GR').decode("utf-8")[0:-1]
+        dec = self.telescope.send_query('GD').decode("utf-8")[0:-1]
+        c = SkyCoord('{0:s} {1:s}'.format(ra, dec), 
+            unit=(u.hourangle, u.deg))
+        cnew = SkyCoord(c.ra + 0*plate_scale, c.dec + ycorr*plate_scale)
+        self.telescope.send_query('Sr{0:s}'.format(cnew.ra.to_string(u.hour, sep=':', precision=2, pad=True)))
+        self.telescope.send_query('Sd{0:s}'.format(cnew.dec.to_string(u.deg, sep=':', precision=2, pad=True)))
+        self.telescope.send_query("MM")
+        print_message('Adjusting the Sun image by RA: {0:3.2f} deg, DEC: {1:3.2f} deg'.format((xcorr*plate_scale).value, (ycorr*plate_scale).value), padding=False)
+        time.sleep(2)
+
     def update_web_suncoords(self):
-        sun, frame = self.get_sun_coords()
-        self.sio.emit({'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value)})
-        self.sio.emit('update', {'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
-                                  'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
-                                  'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)
-                                  })
+        return
+        # sun, frame = self.get_sun_coords()
+        # self.sio.emit({'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value)})
+        # self.sio.emit('update', {'sunalt': '{0:.2f}'.format(sun.transform_to(frame).alt.value),
+        #                           'sunRA': sun.ra.to_string(u.hour, sep=':', precision=0, pad=True),
+        #                           'sunDEC': sun.dec.to_string(u.deg, sep=':', precision=2, pad=True)
+        #                           })
 
     def update_telescope_status(self):
         print_message('Updating telescope status: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]), padding=False)
@@ -290,8 +313,9 @@ class expres_solar():
         except:
           pass
         db_conn.close()      
-        self.sio.emit('telescopeStatus', {'RA': for_db['RA'], 'DEC': for_db['DEC'], 
-              'MOUNT_SIDE':for_db['MOUNT_SIDE'], 'MODE': for_db['MODE']})
+        print(for_db['RA'])
+        self.sio.emit('update', {'telescope_ra': for_db['RA'].decode('utf-8'), 'telescope_dec': for_db['DEC'].decode('utf-8'), 
+              'telescope_orientation':for_db['MOUNT_SIDE'].decode('utf-8'), 'telescope_mode': for_db['MODE'].decode('utf-8')})
 
 
     def update_guider_status(self):
@@ -333,7 +357,8 @@ class expres_solar():
         except:
           pass
         db_conn.close()         
-        self.sio.emit('sunIntensity', float(for_db.loc[0, 'Y_EXP'] / 327.67))
+
+        self.sio.emit('sunIntensity', float(np.log2(23.4 / (( for_db.loc[0, 'Y_EXP'] * 1.017) + 23.4))))
         self.guider_counter += 1
         if self.guider_counter == 10:
             self.sio.emit('guiderUpdate', {'mode':int(for_db.loc[0, 'MODE']), 
@@ -353,7 +378,7 @@ def convert_cols_from_bytes(df):
 def signal_handler(signal, frame):
   print('exiting code')
   # Park telescope here
-  x.end_day() 
+  # x.end_day() 
   # x.scheduler.stop(wait=False)
   sys.exit(0)
 
