@@ -1,20 +1,12 @@
 import astropy.units as u
-import astropy.units as u
 import numpy as np
 import os
 import socketio
-import socketio
 import zwoasi as asi
-
+from PIL import Image
 from astropy.time import Time
 from time import sleep
-
-
-def capture(camera):
-    print("Capturing image")
-    time_str = (Time.now() - 7*u.h).isot[0:19].replace(':','-')
-    camera.capture(os.path.join('webcam', time_str))
-    print("Captured image {0:s}".format(time_str))
+import json
 
 def timeSeconds():
     tnow = (Time.now() - 7*u.h).datetime
@@ -22,12 +14,19 @@ def timeSeconds():
     seconds = (tnow - midnight).seconds
     return seconds
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 if __name__ == "__main__":
+    tstart = 6*u.h
+    tend = 19*u.h
     sio = socketio.Client()
     sio.connect('http://10.10.115.156:8081')
     env_filename = os.getenv('ZWO_ASI_LIB')
-    asi = asi.init(env_filename)
+    asi.init(env_filename)
     num_cameras = asi.get_num_cameras()
     if num_cameras == 0:
         print("No camera found")
@@ -51,6 +50,10 @@ if __name__ == "__main__":
     tend_seconds = tend.to(u.s).value
     while True:
         if ((timeSeconds() > tstart_seconds) and (timeSeconds() < tend_seconds)):
-            capture(camera)
-            sio.emit('environmentWebcam', 'captured')
-            sleep(dt)
+            print("Capturing image")
+            filename = os.path.join('Z:','webcam',(Time.now() - 7*u.h).isot[0:19].replace(':','_')+'.jpg')
+            x = camera.capture(filename=filename)
+            print("Captured image, saving it now")
+            sio.emit('webcam', filename)
+            print('sleeping for 60s')
+            sleep(60)
