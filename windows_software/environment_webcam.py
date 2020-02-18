@@ -1,5 +1,4 @@
 import astropy.units as u
-import astropy.units as u
 import numpy as np
 import os
 import socketio
@@ -10,12 +9,6 @@ from astropy.time import Time
 from time import sleep
 
 
-def capture(camera):
-    print("Capturing image")
-    time_str = (Time.now() - 7*u.h).isot[0:19].replace(':','-')
-    camera.capture(os.path.join('webcam', time_str))
-    print("Captured image {0:s}".format(time_str))
-
 def timeSeconds():
     tnow = (Time.now() - 7*u.h).datetime
     midnight = tnow.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -24,6 +17,8 @@ def timeSeconds():
 
 
 if __name__ == "__main__":
+    tstart = 6*u.h
+    tend = 19*u.h
     sio = socketio.Client()
     sio.connect('http://10.10.115.156:8081')
     env_filename = os.getenv('ZWO_ASI_LIB')
@@ -51,6 +46,9 @@ if __name__ == "__main__":
     tend_seconds = tend.to(u.s).value
     while True:
         if ((timeSeconds() > tstart_seconds) and (timeSeconds() < tend_seconds)):
-            capture(camera)
+            filename = 'webcam' + os.sep +  (Time.now() - 7*u.h).isot[0:19].replace(':','-') + '.jpg'
+            print("Capturing image: {0:s}".format(filename))
+            camera.capture(filename=filename)
+            print("Captured image")
             sio.emit('environmentWebcam', 'captured')
-            sleep(dt)
+            sleep(60)
