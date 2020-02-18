@@ -2,12 +2,11 @@ import astropy.units as u
 import numpy as np
 import os
 import socketio
-import socketio
 import zwoasi as asi
-
+from PIL import Image
 from astropy.time import Time
 from time import sleep
-
+import json
 
 def timeSeconds():
     tnow = (Time.now() - 7*u.h).datetime
@@ -15,6 +14,11 @@ def timeSeconds():
     seconds = (tnow - midnight).seconds
     return seconds
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 if __name__ == "__main__":
     tstart = 6*u.h
@@ -46,9 +50,10 @@ if __name__ == "__main__":
     tend_seconds = tend.to(u.s).value
     while True:
         if ((timeSeconds() > tstart_seconds) and (timeSeconds() < tend_seconds)):
-            filename = 'webcam' + os.sep +  (Time.now() - 7*u.h).isot[0:19].replace(':','-') + '.jpg'
-            print("Capturing image: {0:s}".format(filename))
-            camera.capture(filename=filename)
-            print("Captured image")
-            sio.emit('environmentWebcam', 'captured')
+            print("Capturing image")
+            filename = os.path.join('Z:','webcam',(Time.now() - 7*u.h).isot[0:19].replace(':','_')+'.jpg')
+            x = camera.capture(filename=filename)
+            print("Captured image, saving it now")
+            sio.emit('webcam', filename)
+            print('sleeping for 60s')
             sleep(60)
