@@ -17,9 +17,10 @@ def capture(camera):
     print("Captured image {0:s}".format(time_str))
 
 def timeSeconds():
-tnow = (Time.now() - 7*u.h).datetime
-midnight = tnow.replace(hour=0, minute=0, second=0, microsecond=0)
-seconds = (tnow - midnight).seconds
+    tnow = (Time.now() - 7*u.h).datetime
+    midnight = tnow.replace(hour=0, minute=0, second=0, microsecond=0)
+    seconds = (tnow - midnight).seconds
+    return seconds
 
 
 if __name__ == "__main__":
