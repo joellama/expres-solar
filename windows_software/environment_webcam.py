@@ -27,7 +27,7 @@ if __name__ == "__main__":
     sio = socketio.Client()
     sio.connect('http://10.10.115.156:8081')
     env_filename = os.getenv('ZWO_ASI_LIB')
-    asi = asi.init(env_filename)
+    asi.init(env_filename)
     num_cameras = asi.get_num_cameras()
     if num_cameras == 0:
         print("No camera found")
