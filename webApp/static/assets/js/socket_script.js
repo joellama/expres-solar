@@ -130,7 +130,11 @@ var cfg = {
 };
 
 var environmentChart = new Chart(ctx, cfg);
- 
+
+solarSocket.on('updateWebcam', function(data) {
+  document.getElementById('webcamUpdateTime').innerHTML = 'Updated: ' + data;
+  document.getElementById('webcamImage').src = "/static/assets/img/webcam_latest.jpg?random="+new Date().getTime();
+});
 
 solarSocket.on('environmentData', function(data) {
 	var temperatureData = [];
@@ -143,5 +147,4 @@ solarSocket.on('environmentData', function(data) {
 	environmentChart.data.datasets[0].data = temperatureData;
 	environmentChart.data.datasets[1].data = humidityData;
 	environmentChart.update();
-	console.log('updating chart');
 });
