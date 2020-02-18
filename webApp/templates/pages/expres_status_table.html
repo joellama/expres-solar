@@ -1,0 +1,126 @@
+<table id='expres_status_list'>
+    <thead>
+        <tr>
+            <th>Module</th>
+            <th>Status</th>
+            <th>Sub-Modules</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr module="expres">
+            <td class="module_name">EXPRES MGR</td>
+            <td class="module_status">
+                <span class="ready" desc="null"> </span>
+            </td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="agitator">
+            <td class="module_name">Agitator</td>
+            <td class="module_status">
+                <span class="ready" desc="Connected to agitator server"> </span>
+            </td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="Motor">
+                    <span class="name">Motor</span>
+                    <span class="physical" desc="Not Currently Agitating, ready to get agitating."> </span>
+                </div>
+                <div class="subsystem" subsystem="Server">
+                    <span class="name">Server</span>
+                    <span class="ready" desc="Server available, agitator can be start/stopped"> </span>
+                </div>
+            </td>
+        </tr>
+        <tr module="clock">
+            <td class="module_name">Clock</td>
+            <td class="module_status">
+                <span class="ready" desc="null"> </span>
+            </td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="macros">
+            <td class="module_name">Macros</td>
+            <td class="module_status">
+                <span class="ready" desc="No active sets being processed."> </span>
+            </td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="logsheet">
+            <td class="module_name">Log Sheets</td>
+            <td class="module_status"><span class="ready" desc="Succesfully found/started logsheet and joined night."> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="db"><span class="name">db</span><span class="ready" desc="Connected to database, attempting to determine current"> </span></div>
+            </td>
+        </tr>
+        <tr module="fits">
+            <td class="module_name">FITS Writer</td>
+            <td class="module_status"><span class="ready" desc="null"> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="camera">
+            <td class="module_name">Camera</td>
+            <td class="module_status"><span class="ready" desc="null">READY</span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="archon"><span class="name">archon</span><span class="physical" desc="Archon Not Available: Using FAKE Archon">   </span></div>
+            </td>
+        </tr>
+        <tr module="meter">
+            <td class="module_name">Exposure Meter</td>
+            <td class="module_status"><span class="busy" desc="Exposure meter connection established."> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="Websocket"><span class="name">Websocket</span><span class="not_ready" desc="Websocket NOT Connected to Exposure Meter Server.">   </span></div>
+                <div class="subsystem" subsystem="Meter"><span class="name">Meter</span><span class="not_ready" desc="Meter Service is stopped but can be restarted."> </span></div>
+            </td>
+        </tr>
+        <tr module="tcs">
+            <td class="module_name">Telescope</td>
+            <td class="module_status"><span class="not_ready" desc="TESTING Mode: STOMP Server Not Available"> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="Telescope"><span class="name">Telescope</span><span class="not_ready" desc="Telescope position currently unknown"> </span></div>
+                <div class="subsystem" subsystem="AOS"><span class="name">AOS</span><span class="not_ready" desc="AOS Position currently unknown"> </span></div>
+            </td>
+        </tr>
+        <tr module="envcover">
+            <td class="module_name">Environment Cover</td>
+            <td class="module_status"><span class="ready" desc="FEM Environment Server available."> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="adc">
+            <td class="module_name">Motors</td>
+            <td class="module_status"><span class="not_ready" desc="Hardware specified as OFFLINE"> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+            </td>
+        </tr>
+        <tr module="transfer">
+            <td class="module_name">File Transfer</td>
+            <td class="module_status"><span class="not_ready" desc="An error occurred during the most recent attempt to rsync files to the remote machine."> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="Periodic"><span class="name"> </span><span class="physical" desc="Periodic Syncing NOT RUNNING"> </span></div>
+            </td>
+        </tr>
+        <tr module="lfc">
+            <td class="module_name">LFC</td>
+            <td class="module_status"><span class="ready" desc="LFC connection established."> </span></td>
+            <td class="subsystems">
+                <div class="subsystem" subsystem=""></div>
+                <div class="subsystem" subsystem="LFC"><span class="name">LFC</span><span class="physical" desc="LFC in standby."> </span></div>
+            </td>
+        </tr>
+    </tbody>
+</table>
