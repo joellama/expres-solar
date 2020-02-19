@@ -1,17 +1,10 @@
+import astropy.units as u
 import socketio
-
-from aiohttp import web
-
 import sqlalchemy as db
 
-import astropy.units as u
-
+from aiohttp import web
 from astropy.time import Time
-
 from datetime import datetime
-
-import scipy.misc
-
 from shutil import copyfile
 
 sio = socketio.AsyncServer(async_mode='aiohttp', async_handlers=True,
@@ -61,6 +54,7 @@ async def newWebClient(sid, message):
     print('New Web Client')
     await sio.emit('newWebClient', 'hello')
     await sio.emit('environmentData', db_conn.get24HEnvironment())
+    await sio.emit('updatePlan', {'sun_up': x.sun_up, 'utdate':x.utdate, 'meridian_flip':x.meridian_flip, 'sun_down':x.sun_down})
 
 @sio.on('updatedEnvironment')
 async def newWebClient(sid, message):
@@ -82,6 +76,15 @@ async def webcamImageReceived(sid, data):
     copyfile('/Volumes/solar/webcam/{0:s}'.format(fh), './webApp/static/assets/img/webcam_latest.jpg')
     await sio.emit('updateWebcam', tobs.iso[0:19])
     
+
+@sio.on('planToServer')
+async def planToServer(sid, data):
+    print("Plan for new day received")
+    x.utdate = data['utdate']
+    x.sun_up = data['sun_up']
+    x.meridian_flip = data['meridian_flip']
+    x.sun_down = data['sun_down']
+    await sio.emit('updatePlan', data)
  
 @sio.on('sunIntensity')
 async def update_sun_intensity(sid, data):

@@ -148,3 +148,12 @@ solarSocket.on('environmentData', function(data) {
 	environmentChart.data.datasets[1].data = humidityData;
 	environmentChart.update();
 });
+
+
+solarSocket.on('updatePlan', function(data) {
+  console.log("Updating day plan");
+  document.getElementById('utdate').innerHTML = 'Plan for '+ data['utdate'];
+  document.getElementById('sunup').innerHTML = 'sun up: ' +  data['sun_up'].substring(11, 16);
+  document.getElementById('medflip').innerHTML = 'Med flip: ' +  data['meridian_flip'].substring(11, 16);
+  document.getElementById('sundown').innerHTML = 'sun down: ' +  data['sun_down'].substring(11, 16);
+});

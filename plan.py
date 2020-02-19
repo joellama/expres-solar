@@ -1,6 +1,6 @@
 import pandas as pd
 import pytz
-import socketio
+ 
 
 import astropy.units as u
 
@@ -16,25 +16,21 @@ from astropy.time import Time
 
 from datetime import datetime
 
-from astropy.utils import iers
 
-iers.IERS_A_URL = 'https://datacenter.iers.org/data/9/finals2000A.all'
 
-class expres_solar_plan():
+class expres_solar_planner():
     def __init__(self):
-        self.sio = socketio.Client()
-        self.sio.connect('http://0.0.0.0:8081')
+        from astropy.utils import iers
+        iers.IERS_A_URL = 'https://datacenter.iers.org/data/9/finals2000A.all'
+
         self.site = EarthLocation.of_site('dct')
         self.tz = pytz.timezone('US/Arizona')  
         self.sun_min_alt = 15      
-        # self.scheduler = BackgroundScheduler()
-        # self.scheduler.start()
-        # self.scheduler.add_job(self.plan_the_day, 'cron', hour=1, minute=0, replace_existing=True)
 
     def get_time(self):
         self.iso = Time.now().iso[0:19]
         self.mjd = Time.now().mjd
-        self.utdate = '{0:d}{1:d}{2:d}'.format(Time.now().datetime.year, Time.now().datetime.month, Time.now().datetime.day)
+        self.utdate = '{0:04d}{1:02d}{2:02d}'.format(Time.now().datetime.year, Time.now().datetime.month, Time.now().datetime.day)
 
     def get_sun_coords(self):
         frame = AltAz(obstime=Time.now(), location=self.site)
@@ -58,13 +54,14 @@ class expres_solar_plan():
         self.sunpos['Az'] = sun.transform_to(frame).az.value
         self.sunpos['Alt'] = sun.transform_to(frame).alt.value
 
-
     def plan_the_day(self):
         self.get_sun_for_whole_day()
         self.sun_up = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[0]
         self.sun_down = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[-1]
         self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5]      
-        self.utdate = '{0:d}{1:d}{2:d}'.format(Time.now().datetime.year, Time.now().datetime.month, Time.now().datetime.day)        
+        self.utdate = '{0:04d}{1:02d}{2:02d}'.format(Time.now().datetime.year, Time.now().datetime.month, Time.now().datetime.day)     
+        self.save_plan()
+ 
 
     def save_plan(self):
         engine = db.create_engine("mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.149:3307/solar")
@@ -72,7 +69,7 @@ class expres_solar_plan():
         planTable = db.Table('plan', metadata, autoload=True)
         connection = engine.connect()
         # Check if today already exists 
-        qr = planTable.select().where(planTable.c.DATE==x.utdate)
+        qr = planTable.select().where(planTable.c.DATE==self.utdate)
         res = connection.execute(qr)
         if (res.rowcount == 0):
             connection.execute(planTable.insert().values(DATE=self.utdate, 
