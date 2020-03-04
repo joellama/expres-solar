@@ -98,7 +98,7 @@ class expres_solar():
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM 
         self.scheduler.add_job(self.update_guider, 'interval',seconds=10, replace_existing=True)     
-        self.scheduler.add_job(self.camera.expose, 'interval',minutes=1, replace_existing=True)     
+        self.scheduler.add_job(self.camera.expose, 'interval',seconds=20, replace_existing=True)     
         return
     
     def afternoon(self):
@@ -123,7 +123,7 @@ class expres_solar():
         self.telescope.send_query('hW') # Wake up the telescope and start tracking 
         # Reactivate the guider here - remembering to recall PM
         self.scheduler.add_job(self.update_guider, 'interval',seconds=10, replace_existing=True)  
-        self.scheduler.add_job(self.camera.expose, 'interval',minutes=1, replace_existing=True)           
+        self.scheduler.add_job(self.camera.expose, 'interval',seconds=20, replace_existing=True)           
         return
 
     def evening(self):
