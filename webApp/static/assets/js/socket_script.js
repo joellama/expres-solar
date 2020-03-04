@@ -157,3 +157,9 @@ solarSocket.on('updatePlan', function(data) {
   document.getElementById('medflip').innerHTML = 'Med flip: ' +  data['meridian_flip'].substring(11, 16);
   document.getElementById('sundown').innerHTML = 'sun down: ' +  data['sun_down'].substring(11, 16);
 });
+
+solarSocket.on('environmentManagerToClient', function( status ) {
+  console.log('here');
+  document.getElementById('environmentStatus').innerHTML = status;
+  document.getElementById('environmentStatus').setAttribute('class', status);
+})

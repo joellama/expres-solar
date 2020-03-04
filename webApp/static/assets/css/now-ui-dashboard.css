@@ -2588,13 +2588,15 @@ Created using IcoMoon - icomoon.io
   content: ": ";
 }
 
+
+
 #expres_status_list .module_status .ready,
-  #expres_status_list .subsystem .ready { 
+  #expres_status_list .subsystem .ready, .connected { 
   color: #25b359; /* green */
 }
 
 #expres_status_list .module_status .not_ready,
-  #expres_status_list .subsystem .not_ready {
+  #expres_status_list .subsystem .not_ready, .error {
   color: #ec5b2f; /* red */
 }
 
@@ -2604,7 +2606,7 @@ Created using IcoMoon - icomoon.io
 }
 
 #expres_status_list .module_status .unknown,
-  #expres_status_list .subsystem .unknown {
+  #expres_status_list .subsystem .unknown, .disconnected {
   color: #ec5b2f;
   text-decoration: italic;
 }
@@ -3240,7 +3242,7 @@ Created using IcoMoon - icomoon.io
     background-color: #18ce0f; }
   .card .image {
     overflow: hidden;
-    height: 200px;
+    /*height: 200px;*/
     position: relative; }
   .card .avatar {
     width: 30px;

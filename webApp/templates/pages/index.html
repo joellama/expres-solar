@@ -1,211 +1,170 @@
-      <!-- End Navbar -->
-      <div class="panel-header panel-header-lg">
-        <canvas id="bigDashboardChart" ></canvas>
-      </div>
+<!-- End Navbar -->
+<div class="panel-header panel-header-lg">
+    <canvas id="bigDashboardChart" ></canvas>
+</div>
 
-      <div class="content">
-        <div class="row">
-
-          <div class="col-lg-6 col-md-6">
+<div class="content">
+    <div class="row">  
+        <div class="col-lg-6 col-md-6">
             <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">LOST-1</h5>
-                <h4 class="card-title">EXPRES</h4>
-                <div class="dropdown">
-                  <button type="button" id='expresTableToggle' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="showHide()">
-                    <i class="now-ui-icons arrows-1_minimal-down"></i>
-                  </button>
+                <div class="card-header">
+                    <h5 class="card-category">System</h5>
+                    <h4 class="card-title">Telescope Status</h4>
  
-                </div>
-              </div>
-
-              <div class="card-body">
-
-                <div class="table-responsive" >
-<table id='expres_status_list' class='table'>
-    <thead class="text-primary">
-        <tr>
-            <th>Module</th>
-            <th>Status</th>
-            <th>Sub-Modules</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr module="expres">
-            <td class="module_name">EXPRES MGR</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="agitator" class='hide'>
-            <td class="module_name">Agitator</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="clock" class='hide'>
-            <td class="module_name">Clock</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="macros" class='hide'>
-            <td class="module_name">Macros</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="logsheet" class='hide'>
-            <td class="module_name">Log Sheets</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="fits" class='hide'>
-            <td class="module_name">FITS Writer</td>
-            <td class="module_status"></td>
-        </tr>
-        <tr module="camera">
-            <td class="module_name">Camera</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="meter" class='hide'>
-            <td class="module_name">Exposure Meter</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="tcs" class='hide'>
-            <td class="module_name">Telescope</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="envcover">
-            <td class="module_name">Environment Cover</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="adc" >
-            <td class="module_name">Motors</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="transfer" class='hide'>
-            <td class="module_name">File Transfer</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-        <tr module="lfc">
-            <td class="module_name">LFC</td>
-            <td class="module_status"></td>
-            <td class="subsystems"></td>
-        </tr>
-    </tbody>
-</table>
-
-
- 
-                </div>
-              </div>
             </div>
-          </div>
-
-          <div class="col-lg-6">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="card-category">LOST-2</h5>
-                <h4 class="card-title"> Calcium-K camera</h4>
-              </div>
-              <div class="card-body">
- 
-              </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class=" text-primary">
+                            <th>System</th>
+                            <th>Connection</th>
+                            <th>Status</th>
+                        </thead>
+                        <tbody>
+                            <tr module='lost_mgr'>
+                                <td class='module_name'>LOST Manager</td>
+                                <td class='module_status'></td>
+                            </tr>                            
+                            <tr module='telescope'>
+                                <td class='module_name'>Losmandy Mount</td>
+                                <td class='module_status'></td>
+                            </tr>
+                            <tr module='guider'>
+                                <td class='module_name'>Hinode Guider</td>
+                                <td class='module_status'></td>
+                            </tr>
+                            <tr module='temperature_probe'>
+                                <td class='module_name'>Environment Sensor</td>
+                                <td class='module_status'><span id='environmentStatus'></td>
+                            </tr>
+                            <tr module='webcam'>
+                                <td class='module_name'>Enclosure Webcam</td>
+                                <td class='module_status'></td>
+                            </tr>                            
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+                <div class="card-footer">
+                </div>
             </div>
-          </div>
         </div>
-        <div class="row">
-          <div class="col-lg-6">
+        <div class="col-lg-6">
             <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Enclosure</h5>
-                <h4 class="card-title">Temperature and Humidity</h4>
-<!--                 <div class="dropdown">
-                  <button type="button" class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" data-toggle="dropdown">
-                    <i class="now-ui-icons loader_gear"></i>
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#">Action</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
-                    <a class="dropdown-item text-danger" href="#">Remove Data</a>
-                  </div>
-                </div> -->
-              </div>
-              <div class="card-body">
-                <div class="chart-area" style="min-height: 250px;">
-                  <canvas id="environmentChart"></canvas>
+                <div class="card-header">
+                    <h5 class="card-category">Enclosure</h5>
+                    <h4 class="card-title">Temperature and Humidity</h4>
                 </div>
-              </div>
-              <div class="card-footer">
-<!--                 <div class="stats">
-                  <i class="now-ui-icons arrows-1_refresh-69"></i> Just Updated
-                </div> -->
-              </div>
+                <div class="card-body">
+                    <div class="chart-area" style="min-height: 250px;">
+                    <canvas id="environmentChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer">
+                </div>
             </div>
-          </div>
+        </div>
+    </div>          
+    <div class="row">
+        <div class="col-lg-6 col-md-6">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-category">LOST-1</h5>
+                    <h4 class="card-title">EXPRES</h4>
+                    <div class="dropdown">
+                        <button type="button" id='expresTableToggle' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="showHide()"><i class="now-ui-icons arrows-1_minimal-down"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" >
+                        <table id='expres_status_list' class='table'>
+                            <thead class="text-primary">
+                                <th>Module</th>
+                                <th>Status</th>
+                                <th>Sub-Modules</th>
+                            </thead>
+                            <tbody>
+                                <tr module="expres">
+                                    <td class="module_name">EXPRES MGR</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="agitator" class='hide'>
+                                    <td class="module_name">Agitator</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="clock" class='hide'>
+                                    <td class="module_name">Clock</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="macros" class='hide'>
+                                    <td class="module_name">Macros</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="logsheet" class='hide'>
+                                    <td class="module_name">Log Sheets</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="fits" class='hide'>
+                                    <td class="module_name">FITS Writer</td>
+                                    <td class="module_status"></td>
+                                </tr>
+                                <tr module="camera">
+                                    <td class="module_name">Camera</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="meter" class='hide'>
+                                    <td class="module_name">Exposure Meter</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="tcs" class='hide'>
+                                    <td class="module_name">Telescope</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="envcover">
+                                    <td class="module_name">Environment Cover</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="adc" >
+                                    <td class="module_name">Motors</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="transfer" class='hide'>
+                                    <td class="module_name">File Transfer</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="lfc">
+                                    <td class="module_name">LFC</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-          <div class="col-lg-6 col-md-6">
-            <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Mount</h5>
-                <h4 class="card-title">Losmandy Status</h4>
-                <div class="dropdown">
-                  <button type="button" class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" data-toggle="dropdown">
-                    <i class="now-ui-icons loader_gear"></i>
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#">Action</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
-                    <a class="dropdown-item text-danger" href="#">Remove Data</a>
-                  </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-category">LOST-2</h5>
+                    <h4 class="card-title"> Calcium-K camera</h4>
+                    <img class='image' src='/static/assets/img/sun_latest.png' />
                 </div>
-              </div>
-              <div class="card-body">
-                              <div class="table-responsive">
-                  <table class="table">
-                    <thead class=" text-primary">
-                      <th>
-                        Name
-                      </th>
-                      <th>
-                        Country
-                      </th>
-                      <th>
-                        City
-                      </th>
-                      <th class="text-right">
-                        Salary
-                      </th>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          Dakota Rice
-                        </td>
-                        <td>
-                          Niger
-                        </td>
-                        <td>
-                          Oud-Turnhout
-                        </td>
-                        <td class="text-right">
-                          $36,738
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div class="card-body">
                 </div>
-              </div>
-              <div class="card-footer">
-                <div class="stats">
-                  <i class="now-ui-icons arrows-1_refresh-69"></i> Just Updated
-                </div>
-              </div>
             </div>
-          </div>
-      </div>
+        </div>
+    </div>
+</div>

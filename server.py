@@ -2,6 +2,8 @@ import astropy.units as u
 import socketio
 import sqlalchemy as db
 
+import yaml
+
 from aiohttp import web
 from astropy.time import Time
 from datetime import datetime
@@ -12,11 +14,13 @@ sio = socketio.AsyncServer(async_mode='aiohttp', async_handlers=True,
 
 app = web.Application() 
 
+
 sio.attach(app)
 
 class db_connection():
     def __init__(self):
-        self.engine = db.create_engine("mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.149:3307/solar")
+        config = yaml.safe_load(open('solar_config.yml', 'r'))
+        self.engine = db.create_engine(config['mysql_engine'])
         self.metadata = db.MetaData(bind=self.engine)
         self.environmentTable = db.Table('environment', self.metadata, autoload=True
             )
@@ -55,6 +59,7 @@ async def newWebClient(sid, message):
     await sio.emit('newWebClient', 'hello')
     await sio.emit('environmentData', db_conn.get24HEnvironment())
     await sio.emit('updatePlan', {'sun_up': x.sun_up, 'utdate':x.utdate, 'meridian_flip':x.meridian_flip, 'sun_down':x.sun_down})
+    await sio.emit('environmentManagerToClient', x.environmentManager)
 
 @sio.on('updatedEnvironment')
 async def newWebClient(sid, message):
@@ -85,7 +90,22 @@ async def planToServer(sid, data):
     x.meridian_flip = data['meridian_flip']
     x.sun_down = data['sun_down']
     await sio.emit('updatePlan', data)
+
+
+@sio.on('telescopeStatusToServer')
+async def telescopeStatusToServer(sid, message):
+    print("Updating status of telescope")
+    x.telescopeStatus = message
+    await sio.emit('telescopeStatusToClients', message)
  
+
+
+@sio.on('environmentManagerToServer')
+async def environmentStatusToServer(sid, message):
+    x.environmentManager = message
+    await sio.emit('environmentManagerToClient', message)
+
+
 @sio.on('sunIntensity')
 async def update_sun_intensity(sid, data):
     print('updating sun intensity with value {0:f}'.format(data))
@@ -130,6 +150,7 @@ class variables():
                      'observe':'',
                      'lostT':'',
                      'lostRH':'',
+                     'environmentManager':'disconnected',
                      'weather':'cloudy'}
 
 x = variables()
