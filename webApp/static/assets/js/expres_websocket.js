@@ -1,9 +1,9 @@
 /* Set up global variables and defaults */
 if (! expresMgr) {
-	var expresMgr = "http://10.10.115.152:5164/";
+	var expresMgr = "http://10.10.115.23:5164/";
 }
 if (! expresWS) {
-	var expresWS = "ws://10.10.115.152:8842/ws/";
+	var expresWS = "ws://10.10.115.23:8842/ws/";
 }
 function socketMessageRouter(e) {
 	if (typeof e.data == "string") {

@@ -157,3 +157,27 @@ solarSocket.on('updatePlan', function(data) {
   document.getElementById('medflip').innerHTML = 'Med flip: ' +  data['meridian_flip'].substring(11, 16);
   document.getElementById('sundown').innerHTML = 'sun down: ' +  data['sun_down'].substring(11, 16);
 });
+
+solarSocket.on('environmentManagerToClient', function( status ) {
+  console.log('here');
+  document.getElementById('environmentStatus').innerHTML = status;
+  document.getElementById('environmentStatus').setAttribute('class', status);
+})
+
+solarSocket.on('updateCalciumImage', function(data) {
+  console.log('new calcium image');
+  document.getElementById('calciumImage').src = "/static/assets/img/calcium_latest.jpg?random="+new Date().getTime();
+})
+
+solarSocket.on('guiderStatusToClient', function( data ) {
+  if (data['mode'] == 1) {
+    status = 'Finder';
+  } else if (data['mode'] == 2) {
+    status = 'Calibrating';
+  } else if (data['mode'] == 3) {
+    status = 'Guiding';
+  } else {
+    status = 'Unknown';
+  };
+  document.getElementById('guider_status').innerHTML = status;
+});
