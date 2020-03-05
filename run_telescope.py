@@ -1,11 +1,12 @@
 import astropy.units as u
+import numpy as np 
 import pandas as pd
 import pytz
 import socketio
 import sqlalchemy as db
-import numpy as np 
-import yaml
 import time
+import yaml
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from astropy.coordinates import AltAz
 from astropy.coordinates import EarthLocation
@@ -14,11 +15,11 @@ from astropy.coordinates import get_sun
 from astropy.table import Table
 from astropy.time import Time
 from astropy.utils.iers import conf
+from camera import Camera
 from datetime import datetime
+from guider import Guider
 from plan import expres_solar_planner
 from telescope import Telescope
-from guider import Guider
-from camera import Camera
 conf.auto_max_age = None
 
 def timeSeconds(t):
@@ -30,7 +31,7 @@ def timeSeconds(t):
 
 class expres_solar():
     def __init__(self):
-        self.site = EarthLocation.of_site('dct')
+        self.site = EarthLocation.of_site('lowell')
         self.tz = pytz.timezone('US/Arizona')     
         self.guider = Guider()   
         self.camera = Camera()
@@ -138,12 +139,55 @@ class expres_solar():
         return
 
     def update_guider(self):
-        guider_status = self.guider.get_status()
+        guider_status = self.guider.get_status(save_status=False)
         self.sio.emit('guiderStatusToServer', guider_status)
 
     def center_sun(self):
+        guider_status = self.guider.get_status()
+        x_pos = guider_status['x_ra_pos']
+        y_pos = guider_status['y_ra_pos']
+        if (x_pos != 255) and (y_pos != 255):
+            # First fix x_pos 
+            self.telescope.send_query('RM')
+            if x_pos < 50:
+                while x_pos < 55: 
+                    self.telescope.send_query('Me10')
+                    guider_status = self.guider.get_status()
+                    print("x_pos = {0:d}".format(x_pos))
+                    x_pos = guider_status['x_ra_pos']                    
+                    time.sleep(0.2)
+                self.telescope.send_query("Q")
+            elif x_pos > 60: 
+                while x_pos > 55: 
+                    self.telescope.send_query('Mw10')
+                    guider_status = self.guider.get_status()
+                    print("x_pos = {0:d}".format(x_pos))
+                    x_pos = guider_status['x_ra_pos']                    
+                    time.sleep(0.2)
+                self.telescope.send_query("Q")
+            print("RA aligned")
+            if y_pos < 50:
+                while x_pos < 65: 
+                    self.telescope.send_query('Mn10')
+                    guider_status = self.guider.get_status()
+                    print("y_pos = {0:d}".format(y_pos))
+                    y_pos = guider_status['y_ra_pos']                    
+                    time.sleep(0.2)
+                    if y_pos > 70:
+                        return
+                self.telescope.send_query("Q")
+            elif y_pos > 70: 
+                while y_pos > 65: 
+                    self.telescope.send_query('Ms10')
+                    guider_status = self.guider.get_status()
+                    print("y_pos = {0:d}".format(y_pos))
+                    y_pos = guider_status['y_ra_pos']                    
+                    time.sleep(0.2)
+                    if y_pos < 55:
+                        return
+                self.telescope.send_query("Q")
+            print("DEC aligned")            
         return 
-
 
 def print_message(msg, padding=True):
   if padding:
