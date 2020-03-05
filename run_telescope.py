@@ -42,7 +42,7 @@ class expres_solar():
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
         self.scheduler.add_job(self.getDayPlan, 'cron', hour=1, minute=0, replace_existing=True)        
-        
+        self.config = yaml.safe_load(open('solar_config.yml', 'r'))
         self.getDayPlan() # Also need to run this on the first run through 
         t = Time(datetime.now())
         if (t < Time(self.planner.sun_up)):
@@ -144,21 +144,24 @@ class expres_solar():
 
     def center_sun(self):
         guider_status = self.guider.get_status()
+        if len(guider_status) == 0:
+            guider_status = self.guider.get_status()
+        print(guider_status)
         x_pos = guider_status['x_ra_pos']
         y_pos = guider_status['y_ra_pos']
         if (x_pos != 255) and (y_pos != 255):
             # First fix x_pos 
             self.telescope.send_query('RM')
-            if x_pos < 50:
-                while x_pos < 55: 
+            if x_pos < (self.config['x_center'] - 2):
+                while x_pos < (self.config['x_center']): 
                     self.telescope.send_query('Me10')
                     guider_status = self.guider.get_status()
                     print("x_pos = {0:d}".format(x_pos))
                     x_pos = guider_status['x_ra_pos']                    
                     time.sleep(0.2)
                 self.telescope.send_query("Q")
-            elif x_pos > 60: 
-                while x_pos > 55: 
+            elif x_pos > (self.config['x_center'] + 2): 
+                while x_pos > (self.config['x_center']): 
                     self.telescope.send_query('Mw10')
                     guider_status = self.guider.get_status()
                     print("x_pos = {0:d}".format(x_pos))
@@ -166,27 +169,25 @@ class expres_solar():
                     time.sleep(0.2)
                 self.telescope.send_query("Q")
             print("RA aligned")
-            if y_pos < 50:
-                while x_pos < 65: 
+            if y_pos < (self.config['y_center'] - 2):
+                while y_pos < (self.config['y_center']): 
                     self.telescope.send_query('Mn10')
                     guider_status = self.guider.get_status()
                     print("y_pos = {0:d}".format(y_pos))
                     y_pos = guider_status['y_ra_pos']                    
                     time.sleep(0.2)
-                    if y_pos > 70:
-                        return
                 self.telescope.send_query("Q")
-            elif y_pos > 70: 
-                while y_pos > 65: 
+            elif y_pos > (self.config['y_center'] + 2): 
+                while y_pos > (self.config['y_center']): 
                     self.telescope.send_query('Ms10')
                     guider_status = self.guider.get_status()
                     print("y_pos = {0:d}".format(y_pos))
                     y_pos = guider_status['y_ra_pos']                    
                     time.sleep(0.2)
-                    if y_pos < 55:
-                        return
                 self.telescope.send_query("Q")
             print("DEC aligned")            
+        else:
+            print("No signal from Sun to align")
         return 
 
 def print_message(msg, padding=True):
