@@ -16,38 +16,70 @@
                 <div class="table-responsive">
                     <table class="table">
                         <thead class=" text-primary">
-                            <th>System</th>
-                            <th>Status</th>
+                            <th>Telescope</th>
+                            <th>&nbsp;</th>
                         </thead>
                         <tbody>
-                            <tr module='lost_mgr'>
-                                <td class='module_name'>LOST Manager</td>
-                                <td class='module_status'></td>
-                            </tr>                            
-                            <tr module='telescope'>
-                                <td class='module_name'>Losmandy Mount</td>
-                                <td class='module_status'></td>
+                            <tr module='telescope_update_time_tr'>
+                                <td class='module_name'>Updated</td>
+                                <td class='module_status'><span id='telescope_update_time'></span></td>
                             </tr>
-                            <tr module='guider'>
-                                <td class='module_name'>Hinode Guider</td>
-                                <td class='module_status'><span id='guider_status'></span></td>
+                            <tr module='telescope_velocity_tr'>
+                                <td class='module_name'>Telescope Velocity</td>
+                                <td class='module_status'><span id="telescope_velocity"></span></td>
+                            </tr>                                                
+                            <tr module='telescope_orientation_tr'>
+                                <td class='module_name'>Telescope Orientation</td>
+                                <td class='module_status'><span id="telescope_orientation"></span></td>
+                            </tr>                                                                                   
+                            <tr module='telescope_coords_tr'>
+                                <td class='module_name'>Telescope RA/DEC</td>
+                                <td class='module_status'><span id="telescope_coords"></span></td>
                             </tr>
-                            <tr module='temperature_probe'>
-                                <td class='module_name'>Environment Sensor</td>
-                                <td class='module_status'><span id='environmentStatus'></td>
-                            </tr>
-                            <tr module='webcam'>
-                                <td class='module_name'>Enclosure Webcam</td>
-                                <td class='module_status'></td>
-                            </tr>                            
                         </tbody>
                     </table>
                 </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class=" text-primary">
+                            <th>Guider</th>
+                            <th>&nbsp;</th>
+                            <!-- <th>Status</th> -->
+                        </thead>
+                        <tbody>
+                            <tr moule='guider_update_time_tr'>
+                                <td class='module_name'>Updated</td>
+                                <td class='module_status'><span id='guider_update_time'></span></td>
+                            </tr>
+                            <tr module='guider_mode_tr'>
+                                <td class='module_name'>Guider Mode:</td>
+                                <td class='module_status'><span id="guider_mode"></span></td>
+                            </tr>                                                
+                             <tr module='guider_coords_tr'>
+                                <td class='module_name'>Sun center (actual, ref):</td>
+                                <td class='module_status'><span id="guider_sun_location"></span></td>
+                            </tr>
+                            <tr module='guider_vis_tr'>
+                                <td class='module_name'>Sun Visible:</td>
+                                <td class='module_status'><span id="guider_sun_vis"></span></td>
+                            </tr>                                                 
+                            <tr module='guider_vis_tr'>
+                                <td class='module_name'>Sun Intensity:</td>
+                                <td class='module_status'><span id="guider_sun_intensity"></span></td>
+                            </tr>                                                                             
+                             <tr module='guider_correction_tr'>
+                                <td class='module_name'>Guider correction (x,y):</td>
+                                <td class='module_status'><span id="guider_x_correction"></span> <span id='guider_y_correction'></span></td>
+                            </tr>                                                 
+                        </tbody>
+                    </table>
+                </div>                
                 </div>
                 <div class="card-footer">
                 </div>
             </div>
         </div>
+
         <div class="col-lg-6">
             <div class="card card-chart">
                 <div class="card-header">
@@ -63,7 +95,7 @@
                 </div>
             </div>
         </div>
-    </div>          
+    </div>
     <div class="row">
         <div class="col-lg-6 col-md-6">
             <div class="card card-chart">

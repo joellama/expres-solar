@@ -47,8 +47,8 @@ class Camera():
         self.camera.set_control_value(asi.ASI_BANDWIDTHOVERLOAD, 
             self.camera.get_controls()['BandWidth']['MinValue'])
         self.camera.disable_dark_subtract()
-        self.camera.set_control_value(asi.ASI_GAIN, 50)
-        self.camera.set_control_value(asi.ASI_EXPOSURE, 800)
+        self.camera.set_control_value(asi.ASI_GAIN, 100)
+        self.camera.set_control_value(asi.ASI_EXPOSURE, 1000)
         self.camera.set_control_value(asi.ASI_WB_B, 99)
         self.camera.set_control_value(asi.ASI_WB_R, 75)
         self.camera.set_control_value(asi.ASI_GAMMA, 50)

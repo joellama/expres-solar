@@ -25,6 +25,8 @@ class expres_solar_planner():
         iers.IERS_A_URL = 'https://datacenter.iers.org/data/9/finals2000A.all'
         self.site = EarthLocation.of_site('dct')
         self.tz = pytz.timezone('US/Arizona')  
+        self.config = yaml.safe_load(open('solar_config.yml', 'r'))
+
         self.sun_min_alt = 15      
 
     def get_time(self):
@@ -58,7 +60,21 @@ class expres_solar_planner():
         return datetime.now().replace(hour=np.long(t[0:2]), minute=np.long(t[3:5]), 
                                       second=0, microsecond=0)
 
-    def plan_the_day(self):
+    def plan_the_day_time(self): 
+        tnow = datetime.now() # Local
+        self.sun_up = Time(datetime(tnow.year, tnow.month, tnow.day, 
+            np.long(self.config['start_time'].split(':')[0]), 
+            np.long(self.config['start_time'].split(':')[1]), 0))
+        self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 30))
+            # np.long(self.config['flip_time'].split(':')[0]), 
+            # np.long(self.config['flip_time'].split(':')[1]), 0))        
+        self.sun_down = Time(datetime(tnow.year, tnow.month, tnow.day, 
+            np.long(self.config['stop_time'].split(':')[0]), 
+            np.long(self.config['stop_time'].split(':')[1]), 0))        
+        self.utdate = '{0:04d}{1:02d}{2:02d}'.format(tnow.year, tnow.month, tnow.day)    
+
+
+    def plan_the_day_altitude(self):
         tnow = datetime.now().date()
         doy = tnow.timetuple().tm_yday
         df = pd.read_csv('day_plan.csv')
@@ -66,14 +82,16 @@ class expres_solar_planner():
         print("Found {0:d} entries for DOY: {1:d}".format(len(qr), doy))
         if len(qr) == 1:
             self.sun_up = Time(self.convert_to_datetime(qr['sun_up'].values[0]))
-            self.meridian_flip = Time(self.convert_to_datetime(qr['med_flip'].values[0]))
+            # self.meridian_flip = Time(self.convert_to_datetime(qr['med_flip'].values[0]))
+            self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 30))
             self.sun_down = Time(self.convert_to_datetime(qr['sun_down'].values[0]))
             self.utdate = '{0:04d}{1:02d}{2:02d}'.format(tnow.year, tnow.month, tnow.day)    
         else:
             self.get_sun_for_whole_day()
             self.sun_up = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[0]
             self.sun_down = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[-1]
-            self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5]      
+            # self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5]      
+            self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 00)) 
             self.utdate = '{0:04d}{1:02d}{2:02d}'.format(tnow.year, tnow.month, tnow.day)     
             engine = db.create_engine("mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.149:3307/solar")
             metadata = db.MetaData(bind=engine)

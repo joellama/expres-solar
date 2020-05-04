@@ -131,6 +131,20 @@ var cfg = {
 
 var environmentChart = new Chart(ctx, cfg);
 
+solarSocket.on('update', function(data) {
+  console.log('Got update from Socket');
+  for (var key in data) {
+      // check if the property/key is defined in the object itself, not in parent
+      if (data.hasOwnProperty(key)) {           
+          console.log(key, data[key]);
+            var element = document.getElementById(key);
+            if(typeof(element) != 'undefined' && element != null){
+                document.getElementById(key).innerHTML = data[key];
+            }                        
+      }
+  }
+});
+
 solarSocket.on('updateWebcam', function(data) {
   document.getElementById('webcamUpdateTime').innerHTML = 'Updated: ' + data;
   document.getElementById('webcamImage').src = "/static/assets/img/webcam_latest.jpg?random="+new Date().getTime();
@@ -150,13 +164,23 @@ solarSocket.on('environmentData', function(data) {
 });
 
 
-solarSocket.on('updatePlan', function(data) {
-  console.log("Updating day plan");
-  document.getElementById('utdate').innerHTML = 'Plan for '+ data['utdate'];
-  document.getElementById('sunup').innerHTML = 'sun up: ' +  data['sun_up'].substring(11, 16);
-  document.getElementById('medflip').innerHTML = 'Med flip: ' +  data['meridian_flip'].substring(11, 16);
-  document.getElementById('sundown').innerHTML = 'sun down: ' +  data['sun_down'].substring(11, 16);
-});
+solarSocket.on('intensityData', function(data) {
+  var intensityData = [];
+  var i;
+  for (i=0; i < data['time'].length; i++) {
+    intensityData.push({'t':data['time'][i], 'y':12.5*(data['intensity'][i])  + 125.});
+  };
+  chart.data.datasets[0].data = intensityData;
+  chart.update();
+})
+
+// solarSocket.on('updatePlan', function(data) {
+//   console.log("Updating day plan");
+//   document.getElementById('utdate').innerHTML = 'Plan for '+ data['utdate'];
+//   document.getElementById('sunup').innerHTML = 'sun up: ' +  data['sun_up'].substring(11, 16);
+//   document.getElementById('medflip').innerHTML = 'Med flip: ' +  data['meridian_flip'].substring(11, 16);
+//   document.getElementById('sundown').innerHTML = 'sun down: ' +  data['sun_down'].substring(11, 16);
+// });
 
 solarSocket.on('environmentManagerToClient', function( status ) {
   console.log('here');
