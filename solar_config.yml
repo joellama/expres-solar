@@ -1,0 +1,32 @@
+#######################
+# EXPRES SOLAR Config #
+#######################
+
+#######################
+# Server Config       #
+#######################
+socketServer: http://0.0.0.0:8081
+
+
+#######################
+#    MySQL Engine     #
+#######################
+mysql_engine: "mysql+pymysql://solar:4rp%V5zQgiXEecRRv@solarnas-mh:3307/solar"
+
+
+#######################
+#  Startup/Shutdown   #
+#######################
+startup_type: "altitude" # altitude/time
+min_altitude: 15
+start_time: "08:30"
+flip_time: "12:30"
+stop_time: "18:05"
+
+
+#######################
+#         Guider      #
+#######################
+guider_port: '/dev/cu.usbserial-A105ADUQ' 
+guider_x_center: 72
+guider_y_center: 67
