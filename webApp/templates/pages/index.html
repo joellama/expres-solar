@@ -92,18 +92,24 @@
                     </div>
                 </div>
                 <div class="card-footer">
+                    <h5>Webcams</h5>
+                    <h5 class="card-category">Updated <span id='webcam_updated'></span></h5>
+                    <img src='/static/assets/img/webcam_latest.jpg' alt='Latest Webcam Image' style="width:250px; height:auto; margin-left:15px; margin-right:auto;" id='webcamImage' />
+                    <img class="image" id="webcam_mount" />
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row">
+
+
+    <!-- </div>
+    <div class="row"> -->
         <div class="col-lg-6 col-md-6">
             <div class="card card-chart">
                 <div class="card-header">
                     <h5 class="card-category">LOST-1</h5>
                     <h4 class="card-title">EXPRES</h4>
                     <div class="dropdown">
-                        <button type="button" id='expresTableToggle' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="showHide()"><i class="now-ui-icons arrows-1_minimal-down"></i></button>
+                        <button type="button" id='expresPlayPause' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="pausePlayExpres()"><i class="now-ui-icons media-1_button-pause" ></i></button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -116,31 +122,36 @@
                             </thead>
                             <tbody>
                                 <tr module="expres">
+                                    <td class="module_name">EXPRES Solar</td>
+                                    <td class="module_status"></td>
+                                    <td class="subsystems"></td>
+                                </tr>
+                                <tr module="expres">
                                     <td class="module_name">EXPRES MGR</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="agitator" class='hide'>
+                                <tr module="agitator">
                                     <td class="module_name">Agitator</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="clock" class='hide'>
+                                <tr module="clock">
                                     <td class="module_name">Clock</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="macros" class='hide'>
+                                <tr module="macros">
                                     <td class="module_name">Macros</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="logsheet" class='hide'>
+                                <tr module="logsheet">
                                     <td class="module_name">Log Sheets</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="fits" class='hide'>
+                                <tr module="fits">
                                     <td class="module_name">FITS Writer</td>
                                     <td class="module_status"></td>
                                 </tr>
@@ -149,12 +160,12 @@
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="meter" class='hide'>
+                                <tr module="meter">
                                     <td class="module_name">Exposure Meter</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="tcs" class='hide'>
+                                <tr module="tcs">
                                     <td class="module_name">Telescope</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
@@ -169,7 +180,7 @@
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
                                 </tr>
-                                <tr module="transfer" class='hide'>
+                                <tr module="transfer">
                                     <td class="module_name">File Transfer</td>
                                     <td class="module_status"></td>
                                     <td class="subsystems"></td>
@@ -191,11 +202,29 @@
                 <div class="card-header">
                     <h5 class="card-category">LOST-2</h5>
                     <h4 class="card-title"> Calcium-K camera</h4>
-                    <img class='image' id='calciumImage' />
                 </div>
                 <div class="card-body">
+                    <img class='image' id='calciumImage' />
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-category">Debug</h5>
+                    <h4 class="card-title">Console Output <span><button type='button' id='refreshLog' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="refreshLog()"><i class="now-ui-icons arrows-1_minimal-down" ></i></button></span></h4>
+                    <div class="dropdown">
+                        <button type="button" id='hideLog' class="btn btn-round btn-outline-default dropdown-toggle btn-simple btn-icon no-caret" onclick="showHideConsole()"><i class="now-ui-icons arrows-1_minimal-down" ></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <textarea id="logfile" style="width:100%;" class='hideConsole' rows="10">
+                    At w3schools.com you will learn how to make a website. We offer free tutorials in all web development technologies.
+                    </textarea>
+                </div>
+
         </div>
     </div>
 </div>

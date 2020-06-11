@@ -1,13 +1,14 @@
 console.log('socket_script.js');
 console.log("opening connection to solar server");
-const solarSocket = io('http://0.0.0.0:8081');
+
+const solarSocket = io('http://10.10.30.140:8081');
 solarSocket.emit('newWebClient', 'hello');
 console.log('connected to solar server');
 var environmentDataLoaded = false;
  
 var ctx = document.getElementById('environmentChart').getContext('2d');
     
- 
+
 var cfg = {
 	data: {
       datasets: [{
@@ -136,14 +137,19 @@ solarSocket.on('update', function(data) {
   for (var key in data) {
       // check if the property/key is defined in the object itself, not in parent
       if (data.hasOwnProperty(key)) {           
-          console.log(key, data[key]);
+          // console.log(key, data[key]);
             var element = document.getElementById(key);
             if(typeof(element) != 'undefined' && element != null){
                 document.getElementById(key).innerHTML = data[key];
             }                        
       }
+
   }
 });
+
+solarSocket.on('logfile', function(data) {
+  document.getElementById('logfile').value = data['logfile'];
+})
 
 solarSocket.on('updateWebcam', function(data) {
   document.getElementById('webcamUpdateTime').innerHTML = 'Updated: ' + data;
@@ -205,3 +211,4 @@ solarSocket.on('guiderStatusToClient', function( data ) {
   };
   document.getElementById('guider_status').innerHTML = status;
 });
+ 

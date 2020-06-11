@@ -1,9 +1,7 @@
 /* Set up global variables and defaults */
-if (! expresMgr) {
-	var expresMgr = "http://10.10.115.23:5164/";
-}
+ 
 if (! expresWS) {
-	var expresWS = "ws://10.10.115.23:8842/ws/";
+	var expresWS = "ws://expres.lowell.edu:8842/ws/";
 }
 function socketMessageRouter(e) {
 	if (typeof e.data == "string") {
@@ -80,8 +78,7 @@ function getServerFail(){
 }
 
 function openSocket() {
-	expresMgr = "http://10.10.115.152:5164/";
-	expresWS = "ws://10.10.115.152:8842/ws/";;
+	expresWS = "ws://expres.lowell.edu:8842/ws/";;
 
 	if (isopen && socket != null){
 		alert("Websocket already Open");
@@ -97,9 +94,7 @@ function openSocket() {
 		reconnectTryAttempts = 0; /* reset the counter */
 		$("#tiny_message").html("");
 		
-		/* Request the currently connected TCS and display the name */
-		getTCSName();
-		setActiveObserverID(); /* This also calls expres-add-active-observer */
+ 
 	}
 
 	if ( typeof wsMessageHandler === 'function' ){
@@ -120,136 +115,7 @@ function openSocket() {
 		}
 	}
 }
-
-function getTCSName(){
-	payload = JSON.stringify( {
-			"method": "tcs-get-server-name",
-			"jsonrpc": "2.0",
-			"id": getNextID(),
-		});
-	
-	cmdHeard = $.post(expresMgr, payload,
-		function(results){ 
-			// console.log(results); 
-		} /* Success ... only needed for debugging since we use done, fail, always below */
-		)
-		.done(setTCSName)		/* Callback methods attached to the returned data object */
-		.fail()
-		.always();
-}
-
-function setActiveObserverID(){
-	if (typeof observer_id === 'undefined'){ return; }
-	
-	payload = JSON.stringify( {
-		"method": "expres-add-active-observer",
-		"params": {"user_id": parseInt(observer_id)},
-		"jsonrpc": "2.0",
-		"id": getNextID(),
-		});
-	
-	/* When sent through the websocket, the socket will update observer_id for that
-		websocket and also call the method.
-	*/
-	sendText(payload);
-}
-
-function addActiveObserver(){
-	if (typeof observer_id === 'undefined'){ return; /* not actively observing */ }
-	
-	payload = JSON.stringify( {
-		"method": "expres-add-active-observer",
-		"params": {"user_id": parseInt(observer_id)},
-		"jsonrpc": "2.0",
-		"id": getNextID(),
-		});
-	
-	cmdHeard = $.post(expresMgr, payload,
-		function(results){ console.log(results); }
-		)
-		.done(function( result ){
-			result = JSON.parse(result);
-			if ("error" in result){
-				if ("msg" in result.error) {
-					alert(result.error.msg);
-				} else {
-					alert(result.error);
-				}
-			}
-		})
-		.fail()
-		.always();
-}
-
-function removeActiveObserver(){
-	if (typeof observer_id === 'undefined'){ return; /* not actively observing */ }
-	
-	payload = JSON.stringify( {
-		"method": "expres-remove-active-observer",
-		"jsonrpc": "2.0",
-		"id": getNextID(),
-		});
-	
-	cmdHeard = $.post(expresMgr, payload,
-		function(results){ console.log(results); }
-		)
-		.done(function( result ){
-			if ("error" in result){
-				alert(result.error);
-			}
-		})
-		.fail()
-		.always();
-}
-
-/* If this element doesn't exist, it just fails silently */
-function setTCSName( data ){
-	jsonObj = $.parseJSON(data);
-	$('#tcs_name').text(jsonObj.result.name);
-	$("#tcs_name").removeClass("autoslew");
-	
-	slewStatus = $("#auto_slew_status").text();
-	if (slewStatus && (slewStatus.toLowerCase() == 'on')){
-		$("#tcs_name").addClass("autoslew");
-	}
-}
-
-/*	If wsMessageHandler is not set (or is not a function) then this basic
-	prototype will be set up as the message handler.  You can change the
-	handler using socket.onmessage = someFunctionName, but remember that
-	the reconnection script will try using whatever is in wsMessageHandler.
-*/
-function messageHandlerPrototype( e ) {
-	if (typeof e.data == "string") {
-		packet = $.parseJSON(e.data);
-		if ((typeof packet !== 'object') || (! packet.hasOwnProperty('packet_type'))) { return; }
-		if ((typeof packet == 'status')) {
-		console.log(packet);}
-	} else {
-		var arr = new Uint8Array(e.data);
-		var hex = "";
-		for (var i = 0; i < arr.length; i++) {
-			hex += ("00" + arr[i].toString(16)).substr(-2);
-		}
-		console.log("Binary message received: " + hex);
-	}
-}
-
-/* send text to the websocket */
-function sendText(msg) {
-	if (isopen) {
-	   socket.send(msg);
-	   console.log("Text message sent.");               
-	} else {
-	   console.log("Connection not opened.")
-	}
-}
-
-/* send JSON data to the websocket */
-function sendJSON(msg) {
-	sendText(JSON.stringify(msg));
-}
-
+ 
 /* wait for websocket to open */
 function waitForWebSocket(fcn, timeout, elapsed){
 	if (isopen) {
@@ -265,6 +131,61 @@ function waitForWebSocket(fcn, timeout, elapsed){
 		console.log('Waiting for websocket..');
 		setTimeout(function(){waitForWebSocket(fcn, timeout-delay)}, delay);
 	}
+}
+function update_status( stats ){
+	Object.keys(stats).forEach(function(key,index) {
+    	console.log(stats);
+    	
+    	stat = stats[key];
+    	
+    	modrow = $('#expres_status_list tbody tr[module="'+stat.module+'"]');
+    	if (modrow.length == 0){
+    		console.log("Status row not found for " + stat.module);
+    		return;
+    	} 
+    	
+    	if ((! stat.subsystem) || (stat.subsystem == '') || (stat.subsystem.toLowerCase() == 'none')) {
+    		/* This is the primary module status, not a subsystem */
+    		dClass = disposition_to_class(stat.disposition);
+    		$(modrow).find('td[class="module_status"]').html('<span class="'+dClass+'" desc="'+stat.desc+'">'+stat.name+'</span>');
+    	} else {
+    		/* For subsystems, update an existing div or append a new one */
+    		dClass = disposition_to_class(stat.disposition);
+    		
+    		existingStatus = $(modrow).find('td[class="subsystems"] div[subsystem="'+stat.subsystem+'"]');
+    		
+    		if (existingStatus.length){
+    			$(existingStatus).html(
+    				'<span class="name">'+stat.subsystem+'</span>' +
+    				'<span class="'+dClass+'" desc="'+stat.desc+'">'+stat.name+'</span>');
+    		} else {
+    			$(modrow).find('td[class="subsystems"]').append(
+    				'<div class="subsystem" ' +
+    				'subsystem="'+stat.subsystem +'">' +
+    				'<span class="name">'+stat.subsystem+'</span>' +
+    				'<span class="'+dClass+'" desc="'+stat.desc+'">'+stat.name+'</span></div>');
+    		}
+    	}
+	});
+}
+
+function disposition_to_class( disposition ){
+	switch (disposition) {
+		case 'Ready':
+			return 'ready';
+		case 'Not Ready':
+			return 'not_ready';
+		case 'Busy':
+			return 'busy';
+		case 'Timed Out':
+			return 'timed_out';
+		case 'Waiting':
+			return 'waiting';
+		case 'Physical':
+			return 'physical';
+		default:
+			return 'unknown';
+	};
 }
 
 var expresSocket = openSocket();

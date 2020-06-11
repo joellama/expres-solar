@@ -15,7 +15,7 @@ sio = socketio.AsyncServer(async_mode='aiohttp', async_handlers=True,
 intensityCounter = 0
 app = web.Application() 
 
-logging.basicConfig(filename='/Volumes/solar/server.log', level=logging.WARNING,
+logging.basicConfig(filename='/Volumes/solar/solar_logs/server.log', level=logging.WARNING,
     format="[%(asctime)s][%(levelname)s] %(message)s")
 
 sio.attach(app)
@@ -88,8 +88,19 @@ async def newWebClient(sid, message):
     # await sio.emit('newWebClient', 'hello')
     await sio.emit('environmentData', db_conn.get24HEnvironment())
     await sio.emit('intensityData', db_conn.getTodayIntensity())
+    await sio.emit('logfile', {'logfile':read_logfile()})
     # await sio.emit('updatePlan', {'sun_up': x.sun_up, 'utdate':x.utdate, 'meridian_flip':x.meridian_flip, 'sun_down':x.sun_down})
     # await sio.emit('environmentManagerToClient', x.environmentManager)
+
+
+def read_logfile():
+    try: 
+        with open('/Volumes/solar/solar_logs/{0:s}.log'.format(Time.now().isot[0:10]), 'r') as file:
+            data = file.read()
+    except:
+        data = ""
+    return data
+
 
 @sio.on('update')
 async def update(sid, data):

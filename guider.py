@@ -6,6 +6,7 @@ import yaml
 import astropy.units as u
 from astropy.time import Time
 from itertools import chain
+import logging
 
 class FakeGuider():
     def __init__(self):

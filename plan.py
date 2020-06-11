@@ -5,7 +5,7 @@ import yaml
 import astropy.units as u
 
 import sqlalchemy as db
-
+import logging
 from astropy.coordinates import AltAz
 from astropy.coordinates import EarthLocation
 from astropy.coordinates import SkyCoord
@@ -65,9 +65,9 @@ class expres_solar_planner():
         self.sun_up = Time(datetime(tnow.year, tnow.month, tnow.day, 
             np.long(self.config['start_time'].split(':')[0]), 
             np.long(self.config['start_time'].split(':')[1]), 0))
-        self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 30))
-            # np.long(self.config['flip_time'].split(':')[0]), 
-            # np.long(self.config['flip_time'].split(':')[1]), 0))        
+        self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day,
+            np.long(self.config['flip_time'].split(':')[0]), 
+            np.long(self.config['flip_time'].split(':')[1]), 0))        
         self.sun_down = Time(datetime(tnow.year, tnow.month, tnow.day, 
             np.long(self.config['stop_time'].split(':')[0]), 
             np.long(self.config['stop_time'].split(':')[1]), 0))        
@@ -79,19 +79,19 @@ class expres_solar_planner():
         doy = tnow.timetuple().tm_yday
         df = pd.read_csv('day_plan.csv')
         qr = df.query('doy == {0:d}'.format(doy))
-        print("Found {0:d} entries for DOY: {1:d}".format(len(qr), doy))
+        logging.info("Found {0:d} entries for DOY: {1:d}".format(len(qr), doy))
         if len(qr) == 1:
             self.sun_up = Time(self.convert_to_datetime(qr['sun_up'].values[0]))
-            # self.meridian_flip = Time(self.convert_to_datetime(qr['med_flip'].values[0]))
-            self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 30))
+            self.meridian_flip = Time(self.convert_to_datetime(qr['med_flip'].values[0]))
+            # self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 30))
             self.sun_down = Time(self.convert_to_datetime(qr['sun_down'].values[0]))
             self.utdate = '{0:04d}{1:02d}{2:02d}'.format(tnow.year, tnow.month, tnow.day)    
         else:
             self.get_sun_for_whole_day()
             self.sun_up = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[0]
             self.sun_down = self.sunpos.query('Alt > {0:f}'.format(self.sun_min_alt)).iloc[-1]
-            # self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5]      
-            self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 00)) 
+            self.meridian_flip = self.sunpos.iloc[self.sunpos['Alt'].idxmax() + 5]      
+            # self.meridian_flip = Time(datetime(tnow.year, tnow.month, tnow.day, 12, 00)) 
             self.utdate = '{0:04d}{1:02d}{2:02d}'.format(tnow.year, tnow.month, tnow.day)     
             engine = db.create_engine("mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.149:3307/solar")
             metadata = db.MetaData(bind=engine)

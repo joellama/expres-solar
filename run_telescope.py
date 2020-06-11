@@ -6,7 +6,7 @@ import socketio
 import sqlalchemy as db
 import time
 import yaml
-
+import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from astropy.coordinates import AltAz
 from astropy.coordinates import EarthLocation
@@ -22,6 +22,12 @@ from plan import expres_solar_planner
 from telescope import Telescope
 conf.auto_max_age = None
 
+logging.basicConfig(filename=None,
+    level=logging.INFO, format="[%(asctime)s][%(levelname)s] %(message)s")
+logging.getLogger('socketio').setLevel(logging.ERROR)
+logging.getLogger('engineio').setLevel(logging.ERROR)
+logging.getLogger('apscheduler').setLevel(logging.WARNING)
+ 
 def timeSeconds(t):
     tnow = t.datetime
     midnight = tnow.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -37,7 +43,7 @@ class expres_solar():
         self.guider = Guider()   
         self.camera = Camera()
         self.planner = expres_solar_planner()
-        self.sio = socketio.Client()    
+        self.sio = socketio.Client(logger=False)    
         self.sio.connect('http://localhost:8081')
         self.telescope = Telescope()
         self.scheduler = BackgroundScheduler()
@@ -76,11 +82,20 @@ class expres_solar():
         return
 
     def getDayPlan(self):
+        log = logging.getLogger()  # root logger
+        for hdlr in log.handlers[:]:  # remove all old handlers
+            log.removeHandler(hdlr)
+        log_fh = "/Volumes/solar/solar_logs/{0:s}.log".format(Time.now().isot[0:10])
+        print("Log file: {0:s}".format(log_fh))
+        fileh = logging.FileHandler(log_fh, 'a')
+        formatter = logging.Formatter('[%(asctime)s][%(levelname)s] %(message)s')    
+        fileh.setFormatter(formatter)
+        log.addHandler(fileh)  
         if self.config['startup_type'] == 'altitude':
-            print_message("Planning day using altitude")
+            logging.info("Planning day using altitude")
             self.planner.plan_the_day_altitude() 
         else: 
-            print_message("Planning day using specified time")
+            logging.info("Planning day using specified time")
             self.planner.plan_the_day_time()
         plan = {'utdate': '{0:s}-{1:s}-{2:s}'.format(self.planner.utdate[0:4], self.planner.utdate[4:6], self.planner.utdate[6:8]),
                 'sun_up': self.planner.sun_up.isot[11:16], 
@@ -101,15 +116,17 @@ class expres_solar():
             self.scheduler.add_job(self.evening, 'date',
                                    run_date=Time(self.planner.sun_down).datetime, 
                                    replace_existing=True, id='evening')
-
         return 
+
+
     def get_sun_coords(self):
         frame = AltAz(obstime=Time.now(), location=self.site)
         sun = get_sun(Time.now())
         return sun, frame
 
     def morning(self):
-        print_message('Running morning script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        logging.info("--------------START OF DAY--------------")
+        logging.info("'Running morning script: {0:s}".format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
         # self.telescope.send_query('hW') # Wake up the telescope and start tracking         
         self.telescope.goto(sun) # Move the telescope 
@@ -128,10 +145,10 @@ class expres_solar():
         # Reactivate the guider here - remembering to recall PM 
         self.jobEndTime = (self.planner.meridian_flip - 2*u.min).datetime
         self.jobs['update_guider'] = self.scheduler.add_job(self.update_guider, 
-            'interval',seconds=10, replace_existing=True, id='update_guider',
+            'interval',seconds=45, replace_existing=True, id='update_guider',
             end_date=self.jobEndTime)
         self.jobs['update_telescope'] = self.scheduler.add_job(self.update_telescope, 
-            'interval',seconds=10, replace_existing=True, id='update_telescope',
+            'interval',seconds=60, replace_existing=True, id='update_telescope',
             end_date=self.jobEndTime)     
         self.jobs['camera_expose'] = self.scheduler.add_job(self.camera.expose, 
             'interval', seconds=20, replace_existing=True, id='camera_expose',
@@ -141,7 +158,7 @@ class expres_solar():
         return
     
     def afternoon(self):     
-        print_message('Running Afternoon script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        logging.info('Running Afternoon script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
         sun, frame = self.get_sun_coords()
         self.telescope.send_query('hW')
         self.telescope.goto(sun)   
@@ -171,22 +188,23 @@ class expres_solar():
             'interval', seconds=20, replace_existing=True, id='camera_expose',
             end_date=self.jobEndTime)         
         self.emit({'routine':'afternoon'})     
-
         self.routine = 'afternoon'
         return
 
     def evening(self):   
-        time.sleep(120)
-        print_message('Running evening script: {0:s}'.format((Time.now() - 7*u.h).isot[0:19]))
+        logging.info("Running evening script: {0:s}".format((Time.now() - 7*u.h).isot[0:19]))
         self.guider.send_query(']')
         self.telescope.send_query('hC')
         time.sleep(5)
         self.telescope.send_query('hN') # sleep the telescope 
         self.emit({'routine':'evening'})  
         self.routine = 'evening' 
+        logging.info("--------------END OF DAY--------------")
+        self.update_guider(centering=False) # do not start centering
+        self.update_telescope()
         return
 
-    def update_guider(self):
+    def update_guider(self, centering=True):
         guider_status = self.guider.get_status(save_status=False)
         self.emit(guider_status)
         x_act = guider_status['guider_x_ra_pos'] 
@@ -195,12 +213,17 @@ class expres_solar():
         y_ref = self.config['guider_y_center']
         x_diff = np.abs(x_act - x_ref)
         y_diff = np.abs(y_act - y_ref)
-        # print_message("update guider condition: {0:02d}, {0:02d}".format(xpos, ypos))
-        if ( ((x_diff > 3) or (y_diff > 3)) and ((x_act != 255) or (y_act != 255)) ): 
-            print_message("Attempting to center sun")
+        logging.debug("update guider condition: {0:02d}, {0:02d}".format(x_diff, y_diff))
+        sun_diff_cond = ((x_diff > 3) or (y_diff > 3))
+        sun_vis_cond = ((x_act != 255) and (y_act != 255))
+        sun_vis_cond2 = ((x_act != 0) or (y_act !=0))
+        if (  sun_diff_cond and sun_vis_cond and sun_vis_cond2 and centering): 
+            logging.info("Attempting to center sun (set level debug for detailed alignment)")
             self.center_sun()
             guider_status = self.guider.get_status(save_status=False)
             self.emit(guider_status)
+        elif not sun_vis_cond:
+            logging.info('Sun not visible')
         return
 
     def update_telescope(self):
@@ -212,7 +235,7 @@ class expres_solar():
         try:
             self.scheduler.pause_job('update_guider')
             self.scheduler.pause_job('update_telescope')
-            time.sleep(0.2)
+            time.sleep(12)
         except:
             pass
         self.guider.send_query(']')
@@ -228,21 +251,21 @@ class expres_solar():
         elif 'East' in mount_pos: # afternoon
             move_array = ['e', 'w', 'n', 's']
         else: 
-            print("MOUNT STATUS UNKNOWN")
+            logging.info("MOUNT STATUS UNKNOWN")
             if self.routine != "evening":
                 self.scheduler.resume_job('update_guider')
                 self.scheduler.resume_job('update_telescope')
             return
         steps = 0 
         step_max = 200
-        if (x_pos != 255) and (y_pos != 255): # We have signal 
+        if (x_pos != 255) or (y_pos != 255): # We have signal 
             # First fix x_pos 
             self.telescope.send_query('RM')
             if x_pos < (self.config['guider_x_center'] - 1):
                 while ((x_pos < (self.config['guider_x_center'])) and (x_pos != 0) and (x_pos != 255) and (steps < step_max)): 
                     self.telescope.send_query('M{0:s}50'.format(move_array[0]))
                     guider_status = self.guider.get_status()
-                    print("x_pos = {0:d}".format(x_pos))
+                    logging.debug("x_pos = {0:d}".format(x_pos))
                     x_pos = guider_status['guider_x_ra_pos']                    
                     time.sleep(0.2)
                     steps += 1
@@ -251,18 +274,18 @@ class expres_solar():
                 while ((x_pos > (self.config['guider_x_center'])) and (x_pos != 0) and (x_pos != 255) and (steps < step_max)): 
                     self.telescope.send_query('M{0:s}50'.format(move_array[1]))
                     guider_status = self.guider.get_status()
-                    print("x_pos = {0:d}".format(x_pos))
+                    logging.debug("x_pos = {0:d}".format(x_pos))
                     x_pos = guider_status['guider_x_ra_pos']                    
                     time.sleep(0.2)
                     steps += 1 
                 self.telescope.send_query("Q")
-            print("RA aligned")
+            logging.info("xpix aligned to ({0:02d}/{1:02d})".format(x_pos, self.config['guider_x_center']))
             steps = 0  
             if y_pos < (self.config['guider_y_center'] - 1):
                 while ((y_pos < (self.config['guider_y_center'])) and (y_pos != 0) and (y_pos != 255) and (steps < step_max)): 
                     self.telescope.send_query('M{0:s}50'.format(move_array[2]))
                     guider_status = self.guider.get_status()
-                    print("y_pos = {0:d}".format(y_pos))
+                    logging.debug("y_pos = {0:d}".format(y_pos))
                     y_pos = guider_status['guider_y_ra_pos']                    
                     time.sleep(0.2)
                     steps += 1
@@ -271,22 +294,23 @@ class expres_solar():
                 while ((y_pos > (self.config['guider_y_center'])) and (y_pos != 0) and (y_pos != 255) and (steps < step_max)): 
                     self.telescope.send_query('M{0:s}50'.format(move_array[3]))
                     guider_status = self.guider.get_status()
-                    print("y_pos = {0:d}".format(y_pos))
+                    logging.debug("y_pos = {0:d}".format(y_pos))
                     y_pos = guider_status['guider_y_ra_pos']                    
                     time.sleep(0.2)
                     steps += 1
                 self.telescope.send_query("Q")
-            print("DEC aligned")   
+            logging.info("ypix aligned to ({0:02d}/{1:02d})".format(y_pos, self.config['guider_y_center'])) 
             self.telescope.send_query("Q")         
         else: # We have no signal
-            print_message("No signal from Sun to align")
+            logging.info("No signal from Sun to align")
         self.telescope.send_query("RG")
         self.guider.send_query("Q") # update guider mech offset
         self.telescope.send_query('hW')
         self.guider.send_query('A')
+        time.sleep(0.2)
+        self.guider.send_query('X')
         self.scheduler.resume_job('update_guider')
         self.scheduler.resume_job('update_telescope')
-
         return 
 
 
