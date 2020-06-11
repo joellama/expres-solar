@@ -23,6 +23,6 @@ def index(path):
                                 content=render_template( 'pages/'+path) )
 
 if __name__== "__main__":
-    app.run(host=os.getenv('IP', '10.10.30.140'), 
+    app.run(host=os.getenv('IP', 'expres-test.local'), 
             port=int(os.getenv('PORT', 4444)),
             debug=True)
