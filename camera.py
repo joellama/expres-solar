@@ -28,6 +28,7 @@ import zwoasi as asi
 import socketio
 import yaml
 
+<<<<<<< HEAD
 class FakeCamera:
     def __init__(self):
         pass
@@ -35,6 +36,8 @@ class FakeCamera:
         pass
 
 
+=======
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
 class Camera():
     def __init__(self):
         config = yaml.safe_load(open('solar_config.yml', 'r'))
@@ -54,8 +57,13 @@ class Camera():
         self.camera.set_control_value(asi.ASI_BANDWIDTHOVERLOAD, 
             self.camera.get_controls()['BandWidth']['MinValue'])
         self.camera.disable_dark_subtract()
+<<<<<<< HEAD
         self.camera.set_control_value(asi.ASI_GAIN, 50)
         self.camera.set_control_value(asi.ASI_EXPOSURE, 800)
+=======
+        self.camera.set_control_value(asi.ASI_GAIN, 100)
+        self.camera.set_control_value(asi.ASI_EXPOSURE, 1000)
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
         self.camera.set_control_value(asi.ASI_WB_B, 99)
         self.camera.set_control_value(asi.ASI_WB_R, 75)
         self.camera.set_control_value(asi.ASI_GAMMA, 50)
@@ -69,6 +77,7 @@ class Camera():
         fh_jpg = fh_fits.replace('.fits', '.jpg')
         self.camera.set_image_type(asi.ASI_IMG_RAW8)
         img = self.camera.capture(filename=fh_jpg)          
+<<<<<<< HEAD
         center, radius = self.find_disk(img, threshold=60)
         xpx, ypx = self.camera_info['MaxWidth'], self.camera_info['MaxHeight']
         x0 = np.max([0, np.long((center[1] - radius))])
@@ -96,6 +105,35 @@ class Camera():
         hdr['OFFSET'] = self.camera.get_control_values()['Offset']
         hdu = fits.PrimaryHDU(img, header=hdr)
         hdu.writeto(t.strftime(fh_fits))
+=======
+        # center, radius = self.find_disk(img, threshold=60)
+        # xpx, ypx = self.camera_info['MaxWidth'], self.camera_info['MaxHeight']
+        # x0 = np.max([0, np.long((center[1] - radius))])
+        # x1 = np.min([x0 + 2*radius, xpx])
+        # y0 = np.max([0, np.long((center[0] - radius))])
+        # y1 = np.min([ypx, y0 + 2*radius])
+        # hdr = fits.Header()
+        # hdr['SIMPLE'] = "T"
+        # hdr['BITPIX'] = -32
+        # hdr['NAXIS'] = 2 
+        # hdr['NAXIS1'] = img.shape[0]
+        # hdr['NAXIS2'] = img.shape[1]
+        # hdr['OBSERVAT'] = 'Lowell Observatory'
+        # hdr['TELESCOP'] = 'Solar Telescope'
+        # hdr['INSTRUME'] = 'Calcium K'
+        # hdr['OBJECT'] = 'Sun'
+        # hdr['TIMESYS'] = 'UTC'
+        # hdr['UTDATE'] = t.strftime('%Y%m%d')
+        # hdr['DATE-OBS'] = t.fits
+        # hdr['EXPTIME'] = self.camera.get_control_values()['Exposure']
+        # hdr['GAIN'] = self.camera.get_control_values()['Gain']
+        # hdr['FLIP'] = self.camera.get_control_values()['Flip']
+        # hdr['EXPTIME'] = self.camera.get_control_values()['Exposure']
+        # hdr['COOLERON'] = self.camera.get_control_values()['CoolerOn']
+        # hdr['OFFSET'] = self.camera.get_control_values()['Offset']
+        # hdu = fits.PrimaryHDU(img, header=hdr)
+        # hdu.writeto(t.strftime(fh_fits))
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
         self.sio.emit('NewCalciumImageToServer', fh_jpg)
 
     # def expose(self):

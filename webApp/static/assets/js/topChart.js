@@ -24,7 +24,7 @@ var cfg = {
         data: generateData(),
         type: 'line',
         pointRadius: 0,
-        fill: false,
+        fill: true,
         lineTension: 0,
         borderWidth: 1,
         borderColor: chartColor,
@@ -36,7 +36,6 @@ var cfg = {
         pointHoverRadius: 1,
         pointHoverBorderWidth: 1,
         pointRadius: 1,
-        fill: true,
         backgroundColor: gradientFill,
         borderWidth: 0.5,
       }]
@@ -83,7 +82,9 @@ var cfg = {
           },
           ticks: {
             fontColor: "rgba(255,255,255,0.7)",
-            fontSize: 16
+            fontSize: 16,
+            min:0,
+            max:100,
           },
           scaleLabel: {
             display: true,
@@ -101,7 +102,8 @@ var cfg = {
         xPadding: 12,
         mode: "nearest",
         intersect: 0,
-        position: "nearest"
+        position: "nearest",
+ 
       },
       legend: {
         position: "bottom",
@@ -111,4 +113,19 @@ var cfg = {
     }
 };
 
-    var chart = new Chart(ctx, cfg);
+var chart = new Chart(ctx, cfg);
+
+function formatNumber(number, decimalsLength, decimalSeparator, thousandSeparator) {
+       var n = number,
+           decimalsLength = isNaN(decimalsLength = Math.abs(decimalsLength)) ? 2 : decimalsLength,
+           decimalSeparator = decimalSeparator == undefined ? "," : decimalSeparator,
+           thousandSeparator = thousandSeparator == undefined ? "." : thousandSeparator,
+           sign = n < 0 ? "-" : "",
+           i = parseInt(n = Math.abs(+n || 0).toFixed(decimalsLength)) + "",
+           j = (j = i.length) > 3 ? j % 3 : 0;
+
+       return sign +
+           (j ? i.substr(0, j) + thousandSeparator : "") +
+           i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousandSeparator) +
+           (decimalsLength ? decimalSeparator + Math.abs(n - i).toFixed(decimalsLength).slice(2) : "");
+}

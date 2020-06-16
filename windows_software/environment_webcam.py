@@ -1,12 +1,15 @@
 import astropy.units as u
+import json
 import numpy as np
 import os
 import socketio
+import yaml 
 import zwoasi as asi
+
 from PIL import Image
 from astropy.time import Time
 from time import sleep
-import json
+
 
 def timeSeconds():
     tnow = (Time.now() - 7*u.h).datetime
@@ -23,6 +26,7 @@ if __name__ == "__main__":
     env_filename = os.getenv('ZWO_ASI_LIB')
     asi.init(env_filename)
     num_cameras = asi.get_num_cameras()
+    config = yaml.safe_load(open('../solar_config.yml', 'r'))
     if num_cameras == 0:
         print("No camera found")
         sys.exit(0)

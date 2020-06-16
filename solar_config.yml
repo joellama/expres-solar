@@ -1,23 +1,50 @@
 #######################
 # EXPRES SOLAR Config #
 #######################
+<<<<<<< HEAD
 no-hardware: False
 
+=======
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
 
 #######################
 # Server Config       #
 #######################
+<<<<<<< HEAD
 socketServer: http://10.10.30.138:8081
+=======
+socketServer: http://0.0.0.0:8081
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
 
 
 #######################
 #    MySQL Engine     #
 #######################
+<<<<<<< HEAD
 mysql_engine: "mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.24:3307/solar"
+=======
+mysql_engine: "mysql+pymysql://solar:4rp%V5zQgiXEecRRv@solarnas-mh:3307/solar"
+
+
+#######################
+#  Startup/Shutdown   #
+#######################
+startup_type: "altitude" # altitude/time
+min_altitude: 15
+start_time: "08:30"
+flip_time: "12:30"
+stop_time: "18:05"
+
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a
 
 #######################
 #         Guider      #
 #######################
 guider_port: '/dev/cu.usbserial-A105ADUQ' 
+<<<<<<< HEAD
 x_center: 75
 y_center: 60
+=======
+guider_x_center: 72
+guider_y_center: 67
+>>>>>>> 7fdc453eb9f65a463f1c7f25dad89c269fb4ea8a

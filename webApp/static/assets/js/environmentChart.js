@@ -106,7 +106,7 @@ var cfg = {
         }]
       },
       tooltips: {
-        bodyFontColor: '#000',
+        bodyFontColor: '#fff',
         bodySpacing: 4,
         xPadding: 12,
         mode: "nearest",
