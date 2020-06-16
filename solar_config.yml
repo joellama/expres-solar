@@ -1,0 +1,23 @@
+#######################
+# EXPRES SOLAR Config #
+#######################
+no-hardware: False
+
+
+#######################
+# Server Config       #
+#######################
+socketServer: http://10.10.30.138:8081
+
+
+#######################
+#    MySQL Engine     #
+#######################
+mysql_engine: "mysql+pymysql://solar:4rp%V5zQgiXEecRRv@10.10.115.24:3307/solar"
+
+#######################
+#         Guider      #
+#######################
+guider_port: '/dev/cu.usbserial-A105ADUQ' 
+x_center: 75
+y_center: 60

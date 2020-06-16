@@ -14,12 +14,7 @@ def timeSeconds():
     seconds = (tnow - midnight).seconds
     return seconds
 
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
+ 
 if __name__ == "__main__":
     tstart = 6*u.h
     tend = 19*u.h
