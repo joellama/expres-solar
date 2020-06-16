@@ -19,13 +19,15 @@ sio.attach(app)
 
 class db_connection():
     def __init__(self):
-        config = yaml.safe_load(open('solar_config.yml', 'r'))
+        self.config = yaml.safe_load(open('solar_config.yml', 'r'))
         self.nohardware = self.config['no-hardware']
         if not self.nohardware:
             self.engine = db.create_engine(config['mysql_engine'])
             self.metadata = db.MetaData(bind=self.engine)
             self.environmentTable = db.Table('environment', self.metadata, autoload=True
                 )
+        else:
+            print("Running Server in no hardware mode")
     def get24HEnvironment(self):
         if not self.nohardware:
             connection = self.engine.connect()
